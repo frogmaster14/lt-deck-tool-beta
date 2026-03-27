@@ -1,0 +1,358 @@
+/* =========================
+   기본 세팅
+========================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "맑은 고딕", sans-serif;
+  background: #1b1d22;
+  color: #f2f2f2;
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* =========================
+   상단
+========================= */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  background: #2c313a;
+  color: #f2f2f2;
+  border: 1px solid #4f5a6a;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+button:hover {
+  background: #39414d;
+}
+
+.small-btn {
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* =========================
+   요약 바
+========================= */
+.summary-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  background: #232830;
+  border: 1px solid #3d4654;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+/* =========================
+   페이지
+========================= */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.panel {
+  background: #232830;
+  border: 1px solid #3d4654;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.panel h3 {
+  margin-top: 0;
+}
+
+/* =========================
+   리스트 / 카드
+========================= */
+.grid-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.item-box {
+  min-width: 140px;
+  padding: 10px;
+  background: #2d333d;
+  border: 1px solid #4b5566;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.item-box:hover {
+  background: #3a4452;
+}
+
+.item-box.selected {
+  border: 2px solid #d4b15a;
+}
+
+.item-box.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* =========================
+   슬롯 버튼
+========================= */
+.position-select-row {
+  display: flex;
+  gap: 10px;
+}
+
+.slot-btn {
+  min-width: 160px;
+}
+
+.active-slot {
+  border: 2px solid #d4b15a;
+}
+
+/* =========================
+   카드팩 / 덱 목록
+========================= */
+.pack-box {
+  background: #2a3038;
+  border: 1px solid #485466;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.pack-box h4 {
+  margin-top: 0;
+}
+
+.deck-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* =========================
+   저장
+========================= */
+.save-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+input[type="text"] {
+  width: 260px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #4f5a6a;
+  background: #171a20;
+  color: #f2f2f2;
+}
+
+.help-text {
+  font-size: 13px;
+  color: #cfcfcf;
+}
+
+/* =========================
+   저장 목록
+========================= */
+.saved-deck-card {
+  background: #2d333d;
+  border: 1px solid #4b5566;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.saved-deck-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.saved-deck-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.saved-deck-detail {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #485466;
+}
+/* =========================
+   카드 이미지 표시
+========================= */
+.card-box {
+  width: 180px;
+}
+
+.card-image-wrap {
+  width: 100%;
+  height: 220px;
+  background: #1a1d22;
+  border: 1px solid #4b5566;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 이미지가 없을 때 대신 보여줄 영역 */
+.card-image-fallback {
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px;
+  color: #cfcfcf;
+  font-size: 14px;
+  background: #252a31;
+}
+
+.card-meta {
+  line-height: 1.4;
+}
+.compact-meta {
+  text-align: center;
+}
+
+.compact-meta small {
+  font-size: 12px;
+  color: #d8d8d8;
+}
+/* =========================
+   저장 목록 상세 카드 이미지
+========================= */
+.saved-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.saved-card-item {
+  width: 120px;
+  text-align: center;
+}
+
+.saved-card-image-wrap {
+  width: 100%;
+  height: 150px;
+  background: #1a1d22;
+  border: 1px solid #4b5566;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.saved-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.saved-card-fallback {
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  font-size: 12px;
+  color: #cfcfcf;
+  background: #252a31;
+}
+
+.saved-card-count {
+  font-size: 12px;
+  color: #d8d8d8;
+}
+/* =========================
+   수감자 / 인격 이미지 박스
+========================= */
+.portrait-box {
+  width: 150px;
+}
+
+.portrait-image-wrap {
+  width: 100%;
+  height: 170px;
+  background: #1a1d22;
+  border: 1px solid #4b5566;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.portrait-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.portrait-fallback {
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  color: #cfcfcf;
+  background: #252a31;
+  font-size: 14px;
+}
+
+.portrait-name {
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.4;
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>림버스 카드게임 덱 빌더</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>림버스 카드게임 덱 빌더</h1>
+      <nav class="nav-buttons">
+        <button id="goIdentityPage">인격 선택</button>
+        <button id="goCardPage">카드 선택</button>
+        <button id="goSavePage">저장 목록</button>
+      </nav>
+    </header>
+
+    <!-- 상태 요약 -->
+    <section class="summary-bar">
+      <div>
+        <strong>전위:</strong>
+        <span id="frontIdentityText">미선택</span>
+      </div>
+      <div>
+        <strong>후위:</strong>
+        <span id="backIdentityText">미선택</span>
+      </div>
+      <div>
+        <button id="swapPositionsBtn" class="small-btn">전후위 교체</button>
+      </div>
+      <div>
+        <strong>덱 상태:</strong>
+        <span id="deckStatusText">불충족</span>
+      </div>
+      <div>
+        <strong>카드 수:</strong>
+        <span id="deckCountText">0 / 20</span>
+      </div>
+    </section>
+
+    <!-- 1. 인격 선택 페이지 -->
+    <main id="identityPage" class="page active">
+      <h2>1. 전위 / 후위 인격 선택</h2>
+
+      <section class="panel">
+        <h3>선택 대상 슬롯</h3>
+        <div class="position-select-row">
+          <button id="selectFrontSlotBtn" class="slot-btn active-slot">전위 슬롯 선택 중</button>
+          <button id="selectBackSlotBtn" class="slot-btn">후위 슬롯 선택</button>
+        </div>
+        <p class="help-text">
+          현재 선택 중인 슬롯에 인격이 들어갑니다. 같은 수감자의 인격은 전위와 후위에 동시에 넣을 수 없습니다.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h3>수감자 선택</h3>
+        <div id="sinnerList" class="grid-list"></div>
+      </section>
+
+      <section class="panel">
+        <h3>인격 선택</h3>
+        <div id="identityList" class="grid-list"></div>
+      </section>
+    </main>
+
+    <!-- 2. 카드 선택 페이지 -->
+    <main id="cardPage" class="page">
+      <h2>2. 카드 선택</h2>
+
+      <section class="panel">
+        <h3>사용 가능한 카드팩</h3>
+        <div id="packSections"></div>
+      </section>
+
+      <section class="panel">
+        <h3>현재 덱</h3>
+        <div id="deckCardList" class="deck-list"></div>
+      </section>
+
+      <section class="panel">
+        <h3>덱 저장</h3>
+        <div class="save-row">
+          <input
+            type="text"
+            id="deckNameInput"
+            maxlength="10"
+            placeholder="덱 이름 (최대 10자)"
+          />
+          <button id="saveDeckBtn">저장</button>
+        </div>
+        <p id="saveMessage" class="help-text"></p>
+      </section>
+    </main>
+
+    <!-- 3. 저장 목록 페이지 -->
+    <main id="savePage" class="page">
+      <h2>3. 저장된 덱 목록</h2>
+      <section class="panel">
+        <div id="savedDeckList"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 데이터 파일 -->
+  <script src="data/sinners.js"></script>
+  <script src="data/identities.js"></script>
+  <script src="data/cards.js"></script>
+
+  <!-- 메인 로직 -->
+  <script src="script.js"></script>
+</body>
+</html>
