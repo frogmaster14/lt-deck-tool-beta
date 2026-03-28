@@ -1,383 +1,624 @@
-// ========================================
-// 전역 상태
-// ========================================
-const STORAGE_KEY = "limbusDeckBuilderSavedDecks";
+const STORAGE_KEY = "limbusDeckBuilderSavedDecksV2";
+const DEFAULT_MAX_COPIES = 2;
 
-// 현재 앱 상태
 const appState = {
-  // 현재 인격 목록을 보고 있는 수감자 ID
-  browsingSinnerId: null,
-
-  // 현재 선택 중인 슬롯 ("front" 또는 "back")
-  activePositionSlot: "front",
-
-  // 전위 / 후위 인격 ID
+  currentPage: "select",
+  selectedSinnerId: null,
+  activePosition: "front",
   frontIdentityId: null,
   backIdentityId: null,
-
-  // 현재 덱에 들어간 카드 ID 목록
-  currentDeckCards: []
+  currentDeckCards: [],
+  selectedSavedDeckId: null,
+  hoverCardId: null
 };
 
-// ========================================
-// DOM 요소 가져오기
-// ========================================
-const identityPage = document.getElementById("identityPage");
-const cardPage = document.getElementById("cardPage");
-const savePage = document.getElementById("savePage");
+// =========================
+// DOM
+// =========================
+const pageSelect = document.getElementById("pageSelect");
+const pageBuild = document.getElementById("pageBuild");
+const pageSave = document.getElementById("pageSave");
 
-const goIdentityPage = document.getElementById("goIdentityPage");
-const goCardPage = document.getElementById("goCardPage");
-const goSavePage = document.getElementById("goSavePage");
+const sinnerGrid = document.getElementById("sinnerGrid");
+const identityRow = document.getElementById("identityRow");
 
-const sinnerList = document.getElementById("sinnerList");
-const identityList = document.getElementById("identityList");
-const packSections = document.getElementById("packSections");
-const deckCardList = document.getElementById("deckCardList");
-const savedDeckList = document.getElementById("savedDeckList");
+const frontSlotCard = document.getElementById("frontSlotCard");
+const backSlotCard = document.getElementById("backSlotCard");
+const frontSlotPreview = document.getElementById("frontSlotPreview");
+const backSlotPreview = document.getElementById("backSlotPreview");
 
-const frontIdentityText = document.getElementById("frontIdentityText");
-const backIdentityText = document.getElementById("backIdentityText");
-const deckStatusText = document.getElementById("deckStatusText");
-const deckCountText = document.getElementById("deckCountText");
+const swapBtn = document.getElementById("swapBtn");
+const goSavePageFromSelectBtn = document.getElementById("goSavePageFromSelectBtn");
+const resetSelectBtn = document.getElementById("resetSelectBtn");
+const goBuildPageBtn = document.getElementById("goBuildPageBtn");
 
-const swapPositionsBtn = document.getElementById("swapPositionsBtn");
-const selectFrontSlotBtn = document.getElementById("selectFrontSlotBtn");
-const selectBackSlotBtn = document.getElementById("selectBackSlotBtn");
-
+const buildFrontSummary = document.getElementById("buildFrontSummary");
+const buildBackSummary = document.getElementById("buildBackSummary");
+const identityPackRow = document.getElementById("identityPackRow");
+const basePackRow = document.getElementById("basePackRow");
+const deckRow = document.getElementById("deckRow");
+const deckStatusInline = document.getElementById("deckStatusInline");
 const deckNameInput = document.getElementById("deckNameInput");
 const saveDeckBtn = document.getElementById("saveDeckBtn");
 const saveMessage = document.getElementById("saveMessage");
+const backToSelectBtn = document.getElementById("backToSelectBtn");
+const resetDeckBtn = document.getElementById("resetDeckBtn");
+const goSavePageFromBuildBtn = document.getElementById("goSavePageFromBuildBtn");
+const goSavePageFromSideBtn = document.getElementById("goSavePageFromSideBtn");
+const hoverPreview = document.getElementById("hoverPreview");
 
-// ========================================
-// 공용 함수
-// ========================================
+const savedDeckList = document.getElementById("savedDeckList");
+const renameInput = document.getElementById("renameInput");
+const renameDeckBtn = document.getElementById("renameDeckBtn");
+const generateCodeBtn = document.getElementById("generateCodeBtn");
+const generatedCodeArea = document.getElementById("generatedCodeArea");
+const loadCodeInput = document.getElementById("loadCodeInput");
+const loadCodeBtn = document.getElementById("loadCodeBtn");
+const goCreateDeckBtn = document.getElementById("goCreateDeckBtn");
+const deleteDeckBtn = document.getElementById("deleteDeckBtn");
+const savePageMessage = document.getElementById("savePageMessage");
 
-// ID로 수감자 찾기
-function getSinnerById(sinnerId) {
-  return sinners.find((sinner) => sinner.id === sinnerId);
+// =========================
+// 유틸
+// =========================
+function getSinnerById(id) {
+  return sinners.find((item) => item.id === id);
 }
 
-// ID로 인격 찾기
-function getIdentityById(identityId) {
-  return identities.find((identity) => identity.id === identityId);
+function getIdentityById(id) {
+  return identities.find((item) => item.id === id);
 }
 
-// ID로 카드 찾기
-function getCardById(cardId) {
-  return cards.find((card) => card.id === cardId);
+function getCardById(id) {
+  return cards.find((item) => item.id === id);
 }
 
-// 현재 덱 카드 수
-function getDeckCount() {
-  return appState.currentDeckCards.length;
-}
-
-// 현재 덱이 20장인지 확인
-function isDeckComplete() {
-  return getDeckCount() === 20;
-}
-
-// 저장된 덱 목록 불러오기
 function getSavedDecks() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  return raw ? JSON.parse(raw) : [];
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
 }
 
-// 저장된 덱 목록 저장하기
-function setSavedDecks(savedDecks) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedDecks));
+function setSavedDecks(next) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
-// 현재 덱 상태 문자열
-function getDeckStatusLabel() {
-  return isDeckComplete() ? "완성" : "불충족";
+function showPage(pageName) {
+  appState.currentPage = pageName;
+
+  pageSelect.classList.remove("active");
+  pageBuild.classList.remove("active");
+  pageSave.classList.remove("active");
+
+  if (pageName === "select") pageSelect.classList.add("active");
+  if (pageName === "build") pageBuild.classList.add("active");
+  if (pageName === "save") pageSave.classList.add("active");
 }
 
-// 현재 선택된 인격 2개가 유효한지 확인
-function hasTwoValidIdentities() {
-  return !!appState.frontIdentityId && !!appState.backIdentityId;
+function getCardMaxCopies() {
+  return DEFAULT_MAX_COPIES;
 }
 
-// 현재 선택된 전위/후위 인격의 수감자가 서로 다른지 확인
-function arePositionsValid() {
-  if (!hasTwoValidIdentities()) return false;
-
-  const frontIdentity = getIdentityById(appState.frontIdentityId);
-  const backIdentity = getIdentityById(appState.backIdentityId);
-
-  if (!frontIdentity || !backIdentity) return false;
-
-  return frontIdentity.sinnerId !== backIdentity.sinnerId;
-}
-
-// 현재 전위/후위 기준 사용 가능한 팩 4개 반환
-function getAvailablePackInfos() {
-  if (!hasTwoValidIdentities() || !arePositionsValid()) return [];
-
-  const frontIdentity = getIdentityById(appState.frontIdentityId);
-  const backIdentity = getIdentityById(appState.backIdentityId);
-
-  const frontSinner = getSinnerById(frontIdentity.sinnerId);
-  const backSinner = getSinnerById(backIdentity.sinnerId);
-
-  return [
-    {
-      label: `전위 ${frontSinner.name} 고유 카드팩`,
-      packId: frontSinner.basePackId
-    },
-    {
-      label: `전위 ${frontIdentity.name} 전용 카드팩`,
-      packId: frontIdentity.personalPackId
-    },
-    {
-      label: `후위 ${backSinner.name} 고유 카드팩`,
-      packId: backSinner.basePackId
-    },
-    {
-      label: `후위 ${backIdentity.name} 전용 카드팩`,
-      packId: backIdentity.personalPackId
-    }
-  ];
-}
-
-// 특정 카드가 현재 덱에 몇 장 들어갔는지 반환
 function getCurrentCardCount(cardId) {
   return appState.currentDeckCards.filter((id) => id === cardId).length;
 }
 
-// 카드 추가 가능 여부 확인
-function canAddCard(card) {
-  if (!card) return false;
-
-  // 총 20장을 넘기면 안 됨
-  if (getDeckCount() >= 20) return false;
-
-  // 카드별 최대 매수 제한
-const currentCopies = getCurrentCardCount(card.id);
-if (currentCopies >= 2) return false;
-
-  return true;
+function isDeckComplete() {
+  return appState.currentDeckCards.length === 20;
 }
 
-// 카드 추가
-function addCardToDeck(cardId) {
-  const card = getCardById(cardId);
-  if (!card) return;
-
-  if (!canAddCard(card)) {
-    return;
-  }
-
-  appState.currentDeckCards.push(cardId);
-  renderAll();
+function resetCurrentDeck() {
+  appState.currentDeckCards = [];
+  deckNameInput.value = "";
+  saveMessage.textContent = "";
 }
 
-// 카드 제거 (덱에서 첫 번째 일치 카드 제거)
-function removeCardFromDeck(cardId) {
-  const index = appState.currentDeckCards.findIndex((id) => id === cardId);
-  if (index === -1) return;
-
-  appState.currentDeckCards.splice(index, 1);
-  renderAll();
+function askResetDeckByIdentityChange(message) {
+  if (appState.currentDeckCards.length === 0) return true;
+  return confirm(message);
 }
 
-// 페이지 전환
-function showPage(pageName) {
-  identityPage.classList.remove("active");
-  cardPage.classList.remove("active");
-  savePage.classList.remove("active");
-
-  if (pageName === "identity") identityPage.classList.add("active");
-  if (pageName === "card") cardPage.classList.add("active");
-  if (pageName === "save") savePage.classList.add("active");
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
-// ========================================
-// 렌더링 함수들
-// ========================================
-
-// 상단 요약 렌더링
-function renderSummary() {
-  const frontIdentity = getIdentityById(appState.frontIdentityId);
-  const backIdentity = getIdentityById(appState.backIdentityId);
-
-  frontIdentityText.textContent = frontIdentity ? frontIdentity.name : "미선택";
-  backIdentityText.textContent = backIdentity ? backIdentity.name : "미선택";
-
-  deckStatusText.textContent = getDeckStatusLabel();
-  deckCountText.textContent = `${getDeckCount()} / 20`;
-
-  selectFrontSlotBtn.classList.toggle("active-slot", appState.activePositionSlot === "front");
-  selectBackSlotBtn.classList.toggle("active-slot", appState.activePositionSlot === "back");
+function getSelectedFrontIdentity() {
+  return getIdentityById(appState.frontIdentityId);
 }
 
-// 수감자 목록 렌더링
-function renderSinnerList() {
-  sinnerList.innerHTML = "";
+function getSelectedBackIdentity() {
+  return getIdentityById(appState.backIdentityId);
+}
+
+function hasTwoValidIdentities() {
+  const front = getSelectedFrontIdentity();
+  const back = getSelectedBackIdentity();
+  if (!front || !back) return false;
+  return front.sinnerId !== back.sinnerId;
+}
+
+function getIdentityCardsByPosition(position) {
+  const identity = position === "front" ? getSelectedFrontIdentity() : getSelectedBackIdentity();
+  if (!identity) return [];
+  return cards.filter((card) => card.packId === `pack_identity_${identity.id}`);
+}
+
+function getBaseCardsByPosition(position) {
+  const identity = position === "front" ? getSelectedFrontIdentity() : getSelectedBackIdentity();
+  if (!identity) return [];
+
+  const sinner = getSinnerById(identity.sinnerId);
+  if (!sinner) return [];
+
+  return cards.filter((card) => card.packId === sinner.basePackId);
+}
+
+function getDeckStatusText() {
+  return `${appState.currentDeckCards.length} / 20${isDeckComplete() ? "" : " 불충족"}`;
+}
+
+function arrayBufferToBase64(str) {
+  return btoa(unescape(encodeURIComponent(str)));
+}
+
+function base64ToUtf8(str) {
+  return decodeURIComponent(escape(atob(str)));
+}
+
+// =========================
+// 렌더
+// =========================
+function renderPageSelect() {
+  renderSinnerGrid();
+  renderIdentityRow();
+  renderSelectedSlots();
+}
+
+function renderSinnerGrid() {
+  sinnerGrid.innerHTML = "";
 
   sinners.forEach((sinner) => {
-    const box = document.createElement("div");
-box.className = "item-box portrait-box";
-box.title = sinner.name;
+    const item = document.createElement("div");
+    item.className = "sinner-item";
 
-box.innerHTML = `
-  <div class="portrait-image-wrap">
-    <img
-      src="${sinner.image}"
-      alt="${sinner.name}"
-      class="portrait-image"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-    />
-    <div class="portrait-fallback">${sinner.name}</div>
-  </div>
-  <div class="portrait-name">${sinner.name}</div>
-`;
-
-    if (appState.browsingSinnerId === sinner.id) {
-      box.classList.add("selected");
+    if (appState.selectedSinnerId === sinner.id) {
+      item.classList.add("selected");
     }
 
-    box.addEventListener("click", () => {
-      appState.browsingSinnerId = sinner.id;
-      renderAll();
+    item.innerHTML = `
+      <div class="sinner-thumb-wrap">
+        <img
+          src="${sinner.image || ""}"
+          alt=""
+          class="sinner-thumb"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+        />
+        <div class="sinner-fallback"></div>
+      </div>
+    `;
+
+    item.addEventListener("click", () => {
+      appState.selectedSinnerId = sinner.id;
+      renderPageSelect();
     });
 
-    sinnerList.appendChild(box);
+    sinnerGrid.appendChild(item);
   });
 }
 
-// 현재 보고 있는 수감자의 인격 목록 렌더링
-function renderIdentityList() {
-  identityList.innerHTML = "";
+function renderIdentityRow() {
+  identityRow.innerHTML = "";
 
-  if (!appState.browsingSinnerId) {
-    identityList.innerHTML = "<p>먼저 수감자를 선택하세요.</p>";
+  if (!appState.selectedSinnerId) {
+    identityRow.innerHTML = `<div class="save-message">먼저 수감자를 선택해야 합니다.</div>`;
     return;
   }
 
   const targetIdentities = identities.filter(
-    (identity) => identity.sinnerId === appState.browsingSinnerId
+    (identity) => identity.sinnerId === appState.selectedSinnerId
   );
 
-  if (targetIdentities.length === 0) {
-    identityList.innerHTML = "<p>이 수감자에 등록된 인격이 없습니다.</p>";
-    return;
-  }
-
   targetIdentities.forEach((identity) => {
-    const box = document.createElement("div");
-box.className = "item-box portrait-box";
-box.title = identity.name;
+    const item = document.createElement("div");
+    item.className = "identity-item";
 
-box.innerHTML = `
-  <div class="portrait-image-wrap">
-    <img
-      src="${identity.image}"
-      alt="${identity.name}"
-      class="portrait-image"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-    />
-    <div class="portrait-fallback">${identity.name}</div>
-  </div>
-  <div class="portrait-name">${identity.name}</div>
-`;
-
-    const isSelected =
-      appState.frontIdentityId === identity.id || appState.backIdentityId === identity.id;
-
-    if (isSelected) {
-      box.classList.add("selected");
+    if (
+      appState.frontIdentityId === identity.id ||
+      appState.backIdentityId === identity.id
+    ) {
+      item.classList.add("selected");
     }
 
-    box.addEventListener("click", () => {
+    item.innerHTML = `
+      <div class="identity-image-wrap">
+        <img
+          src="${identity.image || ""}"
+          alt=""
+          class="identity-image"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+        />
+        <div class="identity-fallback"></div>
+      </div>
+    `;
+
+    item.addEventListener("click", () => {
       handleIdentityClick(identity.id);
     });
 
-    identityList.appendChild(box);
+    identityRow.appendChild(item);
   });
 }
 
-// 인격 클릭 처리
+function renderSelectedSlots() {
+  const frontIdentity = getSelectedFrontIdentity();
+  const backIdentity = getSelectedBackIdentity();
+
+  frontSlotCard.classList.toggle("active-slot-card", appState.activePosition === "front");
+  backSlotCard.classList.toggle("active-slot-card", appState.activePosition === "back");
+
+  if (frontIdentity) {
+    frontSlotPreview.classList.remove("empty");
+    frontSlotPreview.innerHTML = `
+      <img
+        src="${frontIdentity.image || ""}"
+        alt=""
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+      />
+      <div class="slot-fallback"></div>
+    `;
+  } else {
+    frontSlotPreview.className = "slot-preview large-slot-preview empty";
+    frontSlotPreview.textContent = "선택 필요";
+  }
+
+  if (backIdentity) {
+    backSlotPreview.classList.remove("empty");
+    backSlotPreview.innerHTML = `
+      <img
+        src="${backIdentity.image || ""}"
+        alt=""
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+      />
+      <div class="slot-fallback"></div>
+    `;
+  } else {
+    backSlotPreview.className = "slot-preview large-slot-preview empty";
+    backSlotPreview.textContent = "선택 필요";
+  }
+}
+
+function renderPageBuild() {
+  renderBuildSummaries();
+  renderPackRows();
+  renderDeckRow();
+  renderHoverPreview();
+}
+
+function renderBuildSummaries() {
+  const frontIdentity = getSelectedFrontIdentity();
+  const backIdentity = getSelectedBackIdentity();
+
+  if (frontIdentity) {
+    buildFrontSummary.className = "build-summary-card has-image small-summary-card";
+    buildFrontSummary.innerHTML = `
+      <img
+        src="${frontIdentity.image || ""}"
+        alt=""
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+      />
+      <div class="slot-fallback"></div>
+    `;
+  } else {
+    buildFrontSummary.className = "build-summary-card small-summary-card";
+    buildFrontSummary.textContent = "전방 미선택";
+  }
+
+  if (backIdentity) {
+    buildBackSummary.className = "build-summary-card has-image small-summary-card";
+    buildBackSummary.innerHTML = `
+      <img
+        src="${backIdentity.image || ""}"
+        alt=""
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+      />
+      <div class="slot-fallback"></div>
+    `;
+  } else {
+    buildBackSummary.className = "build-summary-card small-summary-card";
+    buildBackSummary.textContent = "후방 미선택";
+  }
+}
+
+function renderPackRows() {
+  identityPackRow.innerHTML = "";
+  basePackRow.innerHTML = "";
+
+  if (!hasTwoValidIdentities()) {
+    identityPackRow.innerHTML = `<div class="save-message">전방/후방 인격을 먼저 제대로 선택해야 합니다.</div>`;
+    basePackRow.innerHTML = "";
+    return;
+  }
+
+  const identityCards = [
+    ...getIdentityCardsByPosition("front"),
+    ...getIdentityCardsByPosition("back")
+  ];
+
+  const baseCards = [
+    ...getBaseCardsByPosition("front"),
+    ...getBaseCardsByPosition("back")
+  ];
+
+  renderCardTiles(identityPackRow, identityCards, "add");
+  renderCardTiles(basePackRow, baseCards, "add");
+}
+
+function renderCardTiles(target, cardList, mode) {
+  if (cardList.length === 0) {
+    target.innerHTML = `<div class="save-message">표시할 카드가 없습니다.</div>`;
+    return;
+  }
+
+  cardList.forEach((card) => {
+    const tile = document.createElement("div");
+    tile.className = "card-tile";
+
+    const currentCount = getCurrentCardCount(card.id);
+    const maxCopies = getCardMaxCopies();
+    const bottomText = mode === "add"
+      ? `${currentCount} / ${maxCopies}`
+      : `${currentCount}장`;
+
+    tile.innerHTML = `
+      <img
+        src="${card.image || ""}"
+        alt=""
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+      />
+      <div class="card-fallback"></div>
+      <div class="card-count">${bottomText}</div>
+    `;
+
+    tile.addEventListener("mouseenter", () => {
+      appState.hoverCardId = card.id;
+      renderHoverPreview();
+    });
+
+    tile.addEventListener("click", () => {
+      if (mode === "add") {
+        addCardToDeck(card.id);
+      } else {
+        removeCardFromDeck(card.id);
+      }
+    });
+
+    target.appendChild(tile);
+  });
+}
+
+function renderDeckRow() {
+  deckRow.innerHTML = "";
+  deckStatusInline.textContent = getDeckStatusText();
+
+  if (appState.currentDeckCards.length === 0) {
+    deckRow.innerHTML = `<div class="save-message">덱이 비어 있습니다.</div>`;
+    return;
+  }
+
+  const countedMap = {};
+
+  appState.currentDeckCards.forEach((cardId) => {
+    countedMap[cardId] = (countedMap[cardId] || 0) + 1;
+  });
+
+  Object.keys(countedMap).forEach((cardId) => {
+    const card = getCardById(cardId);
+    if (!card) return;
+
+    const count = countedMap[cardId];
+    renderCardTiles(deckRow, [card], "remove");
+
+    const lastTile = deckRow.lastElementChild;
+    if (lastTile) {
+      const countLabel = lastTile.querySelector(".card-count");
+      if (countLabel) countLabel.textContent = `${count}장`;
+    }
+  });
+}
+
+function renderHoverPreview() {
+  const card = getCardById(appState.hoverCardId);
+
+  if (!card) {
+    hoverPreview.className = "hover-preview empty-preview";
+    hoverPreview.textContent = "마우스를 올리면 확대됩니다";
+    return;
+  }
+
+  hoverPreview.className = "hover-preview";
+  hoverPreview.innerHTML = `
+    <img
+      src="${card.image || ""}"
+      alt=""
+      class="preview-image"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+    />
+    <div class="preview-fallback"></div>
+  `;
+}
+
+function renderPageSave() {
+  renderSavedDeckList();
+}
+
+function renderSavedDeckList() {
+  savedDeckList.innerHTML = "";
+  const savedDecks = getSavedDecks();
+
+  if (savedDecks.length === 0) {
+    savedDeckList.innerHTML = `<div class="save-message">저장된 덱이 없습니다.</div>`;
+    return;
+  }
+
+  savedDecks.forEach((deck) => {
+    const frontIdentity = getIdentityById(deck.frontIdentityId);
+    const backIdentity = getIdentityById(deck.backIdentityId);
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "saved-deck-card";
+
+    const detailId = `detail_${deck.id}`;
+
+    wrapper.innerHTML = `
+      <div class="saved-deck-top">
+        <div class="saved-position-pair">
+          <div class="saved-position-item">
+            <img
+              src="${frontIdentity?.image || ""}"
+              alt=""
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+            />
+            <div class="identity-fallback"></div>
+            <div class="saved-position-label">전방</div>
+          </div>
+          <div class="saved-position-item">
+            <img
+              src="${backIdentity?.image || ""}"
+              alt=""
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+            />
+            <div class="identity-fallback"></div>
+            <div class="saved-position-label">후방</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="saved-deck-name">${escapeHtml(deck.name)}</div>
+          <div class="saved-deck-sub">${deck.cards.length} / 20</div>
+        </div>
+
+        <div class="saved-actions">
+          <button class="ui-btn" data-action="load" data-id="${deck.id}">불러오기</button>
+          <button class="ui-btn" data-action="detail" data-id="${deck.id}">자세히 보기</button>
+          <button class="ui-btn" data-action="select" data-id="${deck.id}">선택</button>
+        </div>
+      </div>
+
+      <div id="${detailId}" class="saved-detail">
+        ${createDeckDetailHtml(deck)}
+      </div>
+    `;
+
+    savedDeckList.appendChild(wrapper);
+  });
+
+  savedDeckList.querySelectorAll("button[data-action]").forEach((button) => {
+    const action = button.dataset.action;
+    const deckId = button.dataset.id;
+
+    button.addEventListener("click", () => {
+      if (action === "load") {
+        loadSavedDeck(deckId);
+      }
+
+      if (action === "detail") {
+        const detail = document.getElementById(`detail_${deckId}`);
+        if (!detail) return;
+        detail.style.display = detail.style.display === "block" ? "none" : "block";
+      }
+
+      if (action === "select") {
+        appState.selectedSavedDeckId = deckId;
+        savePageMessage.textContent = "덱이 선택되었습니다.";
+      }
+    });
+  });
+}
+
+function createDeckDetailHtml(deck) {
+  const countedMap = {};
+  deck.cards.forEach((cardId) => {
+    countedMap[cardId] = (countedMap[cardId] || 0) + 1;
+  });
+
+  let html = `<div class="saved-card-grid">`;
+
+  Object.entries(countedMap).forEach(([cardId, count]) => {
+    const card = getCardById(cardId);
+    if (!card) return;
+
+    html += `
+      <div class="saved-card-item">
+        <img
+          src="${card.image || ""}"
+          alt=""
+          class="saved-card-image"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='none';"
+        />
+        <div class="card-fallback"></div>
+        <div class="saved-card-count">${count}장</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+// =========================
+// 로직
+// =========================
 function handleIdentityClick(identityId) {
   const identity = getIdentityById(identityId);
   if (!identity) return;
 
-  const targetSlot = appState.activePositionSlot;
+  const targetSlot = appState.activePosition;
+  const currentFront = getSelectedFrontIdentity();
+  const currentBack = getSelectedBackIdentity();
 
-  const currentFront = getIdentityById(appState.frontIdentityId);
-  const currentBack = getIdentityById(appState.backIdentityId);
-
-  // 현재 슬롯에 이미 같은 인격이 들어있으면 다시 눌러서 해제
-  // 해제할 때도 덱이 있으면 초기화 확인
-  if (targetSlot === "front" && appState.frontIdentityId === identityId) {
-    if (appState.currentDeckCards.length > 0) {
-      const confirmed = confirm(
-        "인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
-      );
-      if (!confirmed) return;
-    }
-
-    appState.frontIdentityId = null;
-    appState.currentDeckCards = [];
-    deckNameInput.value = "";
-    saveMessage.textContent = "";
-    renderAll();
+  if (targetSlot === "front" && currentBack && currentBack.sinnerId === identity.sinnerId) {
+    alert("같은 수감자의 인격은 전방/후방에 동시에 넣을 수 없습니다.");
     return;
   }
 
-  if (targetSlot === "back" && appState.backIdentityId === identityId) {
-    if (appState.currentDeckCards.length > 0) {
-      const confirmed = confirm(
-        "인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
-      );
-      if (!confirmed) return;
-    }
-
-    appState.backIdentityId = null;
-    appState.currentDeckCards = [];
-    deckNameInput.value = "";
-    saveMessage.textContent = "";
-    renderAll();
+  if (targetSlot === "back" && currentFront && currentFront.sinnerId === identity.sinnerId) {
+    alert("같은 수감자의 인격은 전방/후방에 동시에 넣을 수 없습니다.");
     return;
   }
 
-  // 같은 수감자 중복 금지
-  if (
-    targetSlot === "front" &&
-    currentBack &&
-    currentBack.sinnerId === identity.sinnerId
-  ) {
-    alert("같은 수감자의 인격은 전위와 후위에 동시에 선택할 수 없습니다.");
-    return;
-  }
+  const isRemovingSame =
+    (targetSlot === "front" && appState.frontIdentityId === identityId) ||
+    (targetSlot === "back" && appState.backIdentityId === identityId);
 
-  if (
-    targetSlot === "back" &&
-    currentFront &&
-    currentFront.sinnerId === identity.sinnerId
-  ) {
-    alert("같은 수감자의 인격은 전위와 후위에 동시에 선택할 수 없습니다.");
-    return;
-  }
-
-  // 실제로 인격 변경이 일어나는 경우, 현재 덱이 있으면 확인 후 초기화
-  const isChangingIdentity =
-    (targetSlot === "front" && appState.frontIdentityId !== identityId) ||
-    (targetSlot === "back" && appState.backIdentityId !== identityId);
-
-  if (isChangingIdentity && appState.currentDeckCards.length > 0) {
-    const confirmed = confirm(
-      "인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
-    );
-
-    if (!confirmed) {
+  if (isRemovingSame) {
+    if (!askResetDeckByIdentityChange("인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?")) {
       return;
     }
 
-    appState.currentDeckCards = [];
-    deckNameInput.value = "";
-    saveMessage.textContent = "";
+    if (targetSlot === "front") appState.frontIdentityId = null;
+    if (targetSlot === "back") appState.backIdentityId = null;
+    resetCurrentDeck();
+    renderAll();
+    return;
+  }
+
+  const isActuallyChanging =
+    (targetSlot === "front" && appState.frontIdentityId !== identityId) ||
+    (targetSlot === "back" && appState.backIdentityId !== identityId);
+
+  if (isActuallyChanging && appState.currentDeckCards.length > 0) {
+    const confirmed = confirm(
+      "인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
+    );
+    if (!confirmed) return;
+    resetCurrentDeck();
   }
 
   if (targetSlot === "front") {
@@ -389,390 +630,269 @@ function handleIdentityClick(identityId) {
   renderAll();
 }
 
-// 카드팩 섹션 렌더링
-function renderPackSections() {
-  packSections.innerHTML = "";
+function canAddCard(cardId) {
+  const card = getCardById(cardId);
+  if (!card) return false;
+  if (appState.currentDeckCards.length >= 20) return false;
+  if (getCurrentCardCount(cardId) >= getCardMaxCopies()) return false;
+  return true;
+}
 
-  if (!hasTwoValidIdentities() || !arePositionsValid()) {
-    packSections.innerHTML = "<p>전위와 후위 인격을 먼저 올바르게 선택하세요.</p>";
+function addCardToDeck(cardId) {
+  if (!hasTwoValidIdentities()) {
+    alert("전방/후방 인격을 먼저 선택해야 합니다.");
     return;
   }
 
-  const packInfos = getAvailablePackInfos();
-
-  packInfos.forEach((packInfo) => {
-    const section = document.createElement("div");
-    section.className = "pack-box";
-
-    const title = document.createElement("h4");
-    title.textContent = packInfo.label;
-    section.appendChild(title);
-
-    const packCards = cards.filter((card) => card.packId === packInfo.packId);
-
-    if (packCards.length === 0) {
-      const empty = document.createElement("p");
-      empty.textContent = "이 카드팩에 등록된 카드가 없습니다.";
-      section.appendChild(empty);
-    } else {
-      const list = document.createElement("div");
-      list.className = "grid-list";
-
-      packCards.forEach((card) => {
-        const box = document.createElement("div");
-box.className = "item-box card-box";
-
-const currentCount = getCurrentCardCount(card.id);
-
-box.title = card.name;
-
-box.innerHTML = `
-  <div class="card-image-wrap">
-    <img
-      src="${card.image}"
-      alt="${card.name}"
-      class="card-image"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-    />
-    <div class="card-image-fallback">
-      ${card.name}
-    </div>
-  </div>
-  <div class="card-meta compact-meta">
-    <small>${currentCount} / ${card.maxCopies}</small>
-  </div>
-`;
-
-        // 더블클릭으로 카드 추가
-        box.addEventListener("dblclick", () => {
-          addCardToDeck(card.id);
-        });
-
-        // 드래그 가능 설정
-        box.draggable = true;
-        box.addEventListener("dragstart", (event) => {
-          event.dataTransfer.setData("text/plain", card.id);
-        });
-
-        list.appendChild(box);
-      });
-
-      section.appendChild(list);
-    }
-
-    packSections.appendChild(section);
-  });
-}
-
-// 현재 덱 렌더링
-function renderDeckList() {
-  deckCardList.innerHTML = "";
-
-  if (appState.currentDeckCards.length === 0) {
-    deckCardList.innerHTML = "<p>덱에 카드가 없습니다.</p>";
-    setupDeckDropZone();
+  if (!canAddCard(cardId)) {
     return;
   }
 
-  // 같은 카드끼리 묶어서 표시
-  const countedMap = {};
-
-  appState.currentDeckCards.forEach((cardId) => {
-    countedMap[cardId] = (countedMap[cardId] || 0) + 1;
-  });
-
-  Object.entries(countedMap).forEach(([cardId, count]) => {
-    const card = getCardById(cardId);
-    if (!card) return;
-
-    const box = document.createElement("div");
-box.className = "item-box card-box";
-box.title = card.name;
-
-box.innerHTML = `
-  <div class="card-image-wrap">
-    <img
-      src="${card.image}"
-      alt="${card.name}"
-      class="card-image"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-    />
-    <div class="card-image-fallback">
-      ${card.name}
-    </div>
-  </div>
-  <div class="card-meta compact-meta">
-    <small>${count}장</small>
-  </div>
-`;
-
-    // 더블클릭으로 카드 제거
-    box.addEventListener("dblclick", () => {
-      removeCardFromDeck(card.id);
-    });
-
-    // 덱 카드도 드래그 가능
-    box.draggable = true;
-    box.addEventListener("dragstart", (event) => {
-      event.dataTransfer.setData("text/remove-card", card.id);
-    });
-
-    deckCardList.appendChild(box);
-  });
-
-  setupDeckDropZone();
+  appState.currentDeckCards.push(cardId);
+  renderPageBuild();
 }
 
-// 드롭 영역 세팅
-function setupDeckDropZone() {
-  deckCardList.addEventListener("dragover", (event) => {
-    event.preventDefault();
-  });
+function removeCardFromDeck(cardId) {
+  const index = appState.currentDeckCards.findIndex((id) => id === cardId);
+  if (index === -1) return;
 
-  // 카드팩 영역에서 덱으로 드롭하면 추가
-  deckCardList.addEventListener("drop", (event) => {
-    event.preventDefault();
-
-    const addCardId = event.dataTransfer.getData("text/plain");
-    if (addCardId) {
-      addCardToDeck(addCardId);
-    }
-  });
-
-  // 덱 자체에서 드래그해서 바깥으로 빼는 건 브라우저 기본 한계 때문에 완벽하진 않아서
-  // 첫 버전에서는 더블클릭 제거를 मुख्य 기능으로 쓰는 게 안전함
+  appState.currentDeckCards.splice(index, 1);
+  renderPageBuild();
 }
 
-// 저장 목록 렌더링
-function renderSavedDecks() {
-  savedDeckList.innerHTML = "";
-
-  const savedDecks = getSavedDecks();
-
-  if (savedDecks.length === 0) {
-    savedDeckList.innerHTML = "<p>저장된 덱이 없습니다.</p>";
-    return;
-  }
-
-  savedDecks.forEach((deck) => {
-    const frontIdentity = getIdentityById(deck.frontIdentityId);
-    const backIdentity = getIdentityById(deck.backIdentityId);
-
-    const cardCount = deck.cards.length;
-    const statusLabel = cardCount === 20 ? "완성" : "불충족";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "saved-deck-card";
-
-    const top = document.createElement("div");
-    top.className = "saved-deck-top";
-    top.innerHTML = `
-      <div>
-        <strong>${deck.name}</strong><br>
-        <small>전위: ${frontIdentity ? frontIdentity.name : "없음"} / 후위: ${backIdentity ? backIdentity.name : "없음"}</small><br>
-        <small>상태: ${statusLabel} (${cardCount}/20)</small>
-      </div>
-    `;
-
-    const actionArea = document.createElement("div");
-    actionArea.className = "saved-deck-actions";
-
-    const viewBtn = document.createElement("button");
-    viewBtn.textContent = "보기";
-
-    const loadBtn = document.createElement("button");
-    loadBtn.textContent = "불러오기";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "삭제";
-
-    const detail = document.createElement("div");
-    detail.className = "saved-deck-detail";
-    detail.style.display = "none";
-
-    viewBtn.addEventListener("click", () => {
-      if (detail.style.display === "none") {
-        detail.style.display = "block";
-        detail.innerHTML = createDeckDetailHtml(deck);
-      } else {
-        detail.style.display = "none";
-      }
-    });
-
-    loadBtn.addEventListener("click", () => {
-      appState.frontIdentityId = deck.frontIdentityId;
-      appState.backIdentityId = deck.backIdentityId;
-      appState.currentDeckCards = [...deck.cards];
-      showPage("card");
-      renderAll();
-    });
-
-    deleteBtn.addEventListener("click", () => {
-      const nextDecks = getSavedDecks().filter((item) => item.id !== deck.id);
-      setSavedDecks(nextDecks);
-      renderAll();
-    });
-
-    actionArea.appendChild(viewBtn);
-    actionArea.appendChild(loadBtn);
-    actionArea.appendChild(deleteBtn);
-
-    top.appendChild(actionArea);
-    wrapper.appendChild(top);
-    wrapper.appendChild(detail);
-
-    savedDeckList.appendChild(wrapper);
-  });
-}
-
-// 저장 덱 상세 HTML 생성
-function createDeckDetailHtml(deck) {
-  const frontIdentity = getIdentityById(deck.frontIdentityId);
-  const backIdentity = getIdentityById(deck.backIdentityId);
-
-  const countedMap = {};
-  deck.cards.forEach((cardId) => {
-    countedMap[cardId] = (countedMap[cardId] || 0) + 1;
-  });
-
-  let html = `
-    <div><strong>전위:</strong> ${frontIdentity ? frontIdentity.name : "없음"}</div>
-    <div><strong>후위:</strong> ${backIdentity ? backIdentity.name : "없음"}</div>
-    <div style="margin-top:10px;"><strong>카드 목록:</strong></div>
-    <div class="saved-card-grid">
-  `;
-
-  Object.entries(countedMap).forEach(([cardId, count]) => {
-    const card = getCardById(cardId);
-    if (!card) return;
-
-    html += `
-      <div class="saved-card-item" title="${card.name}">
-        <div class="saved-card-image-wrap">
-          <img
-            src="${card.image}"
-            alt="${card.name}"
-            class="saved-card-image"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
-          />
-          <div class="saved-card-fallback">${card.name}</div>
-        </div>
-        <div class="saved-card-count">${count}장</div>
-      </div>
-    `;
-  });
-
-  html += `</div>`;
-
-  return html;
-}
-// 전체 렌더링
-function renderAll() {
-  renderSummary();
-  renderSinnerList();
-  renderIdentityList();
-  renderPackSections();
-  renderDeckList();
-  renderSavedDecks();
-}
-
-// ========================================
-// 저장 처리
-// ========================================
 function saveCurrentDeck() {
-  const deckName = deckNameInput.value.trim();
+  const name = deckNameInput.value.trim();
 
-  if (!deckName) {
-    saveMessage.textContent = "덱 이름을 입력하세요.";
+  if (!name) {
+    saveMessage.textContent = "덱 이름을 입력해야 합니다.";
     return;
   }
 
-  if (deckName.length > 10) {
-    saveMessage.textContent = "덱 이름은 10자 이하만 가능합니다.";
-    return;
-  }
-
-  if (!hasTwoValidIdentities() || !arePositionsValid()) {
-    saveMessage.textContent = "전위와 후위 인격을 먼저 올바르게 선택하세요.";
+  if (!hasTwoValidIdentities()) {
+    saveMessage.textContent = "전방/후방 인격을 먼저 제대로 선택해야 합니다.";
     return;
   }
 
   const savedDecks = getSavedDecks();
-
-  // 이름 중복 금지
-  const duplicated = savedDecks.some((deck) => deck.name === deckName);
-  if (duplicated) {
+  if (savedDecks.some((deck) => deck.name === name)) {
     saveMessage.textContent = "같은 이름의 덱이 이미 있습니다.";
     return;
   }
 
-  const newDeck = {
+  savedDecks.push({
     id: `deck_${Date.now()}`,
-    name: deckName,
+    name,
     frontIdentityId: appState.frontIdentityId,
     backIdentityId: appState.backIdentityId,
     cards: [...appState.currentDeckCards],
     createdAt: new Date().toISOString()
-  };
+  });
 
-  savedDecks.push(newDeck);
   setSavedDecks(savedDecks);
-
   saveMessage.textContent = isDeckComplete()
     ? "덱이 저장되었습니다."
-    : "불충족 상태의 덱이 저장되었습니다.";
+    : "불충족 상태로 저장되었습니다.";
+  renderPageSave();
+}
 
-  deckNameInput.value = "";
+function loadSavedDeck(deckId) {
+  const deck = getSavedDecks().find((item) => item.id === deckId);
+  if (!deck) return;
+
+  appState.frontIdentityId = deck.frontIdentityId;
+  appState.backIdentityId = deck.backIdentityId;
+  appState.currentDeckCards = [...deck.cards];
+  deckNameInput.value = deck.name;
+  saveMessage.textContent = "";
+  showPage("build");
   renderAll();
 }
 
-// ========================================
-// 이벤트 연결
-// ========================================
-goIdentityPage.addEventListener("click", () => {
-  // 현재 덱에 카드가 들어있으면 경고
-  if (appState.currentDeckCards.length > 0) {
-    const confirmed = confirm(
-      "인격 선택으로 이동하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    // 덱 초기화
-    appState.currentDeckCards = [];
-    deckNameInput.value = "";
-    saveMessage.textContent = "";
+function renameSelectedDeck() {
+  const newName = renameInput.value.trim();
+  if (!newName) {
+    savePageMessage.textContent = "새 이름을 입력해야 합니다.";
+    return;
   }
 
-  showPage("identity");
-  renderAll();
-});
-goCardPage.addEventListener("click", () => showPage("card"));
-goSavePage.addEventListener("click", () => showPage("save"));
+  if (!appState.selectedSavedDeckId) {
+    savePageMessage.textContent = "먼저 저장 목록에서 덱 하나를 선택해야 합니다.";
+    return;
+  }
 
-selectFrontSlotBtn.addEventListener("click", () => {
-  appState.activePositionSlot = "front";
-  renderSummary();
+  const decks = getSavedDecks();
+  if (decks.some((deck) => deck.name === newName && deck.id !== appState.selectedSavedDeckId)) {
+    savePageMessage.textContent = "같은 이름의 덱이 이미 있다.";
+    return;
+  }
+
+  const target = decks.find((deck) => deck.id === appState.selectedSavedDeckId);
+  if (!target) return;
+
+  target.name = newName;
+  setSavedDecks(decks);
+  savePageMessage.textContent = "이름이 변경되었습니다.";
+  renameInput.value = "";
+  renderPageSave();
+}
+
+function generateDeckCode() {
+  if (!appState.selectedSavedDeckId) {
+    savePageMessage.textContent = "먼저 저장 목록에서 덱 하나를 선택해야 합니다.";
+    return;
+  }
+
+  const deck = getSavedDecks().find((item) => item.id === appState.selectedSavedDeckId);
+  if (!deck) return;
+
+  const code = arrayBufferToBase64(JSON.stringify({
+    name: deck.name,
+    frontIdentityId: deck.frontIdentityId,
+    backIdentityId: deck.backIdentityId,
+    cards: deck.cards
+  }));
+
+  generatedCodeArea.value = code;
+  savePageMessage.textContent = "코드가 생성되었습니다.";
+}
+
+function loadDeckFromCode() {
+  const raw = loadCodeInput.value.trim();
+  if (!raw) {
+    savePageMessage.textContent = "코드를 입력해야 합니다.";
+    return;
+  }
+
+  try {
+    const parsed = JSON.parse(base64ToUtf8(raw));
+
+    if (!parsed.frontIdentityId || !parsed.backIdentityId || !Array.isArray(parsed.cards)) {
+      throw new Error("bad");
+    }
+
+    appState.frontIdentityId = parsed.frontIdentityId;
+    appState.backIdentityId = parsed.backIdentityId;
+    appState.currentDeckCards = [...parsed.cards];
+    deckNameInput.value = parsed.name || "";
+    savePageMessage.textContent = "코드로 덱을 불러왔습니다.";
+    showPage("build");
+    renderAll();
+  } catch {
+    savePageMessage.textContent = "코드 형식이 잘못되었습니다.";
+  }
+}
+
+function deleteSelectedDeck() {
+  if (!appState.selectedSavedDeckId) {
+    savePageMessage.textContent = "먼저 저장 목록에서 덱 하나를 선택해야 합니다.";
+    return;
+  }
+
+  const confirmed = confirm("선택한 덱을 삭제할까요?");
+  if (!confirmed) return;
+
+  const next = getSavedDecks().filter((deck) => deck.id !== appState.selectedSavedDeckId);
+  setSavedDecks(next);
+  appState.selectedSavedDeckId = null;
+  savePageMessage.textContent = "덱이 삭제되었습니다.";
+  renderPageSave();
+}
+
+// =========================
+// 이벤트
+// =========================
+frontSlotCard.addEventListener("click", () => {
+  appState.activePosition = "front";
+  renderSelectedSlots();
 });
 
-selectBackSlotBtn.addEventListener("click", () => {
-  appState.activePositionSlot = "back";
-  renderSummary();
+backSlotCard.addEventListener("click", () => {
+  appState.activePosition = "back";
+  renderSelectedSlots();
 });
 
-// 전후위 교체 버튼
-swapPositionsBtn.addEventListener("click", () => {
+swapBtn.addEventListener("click", () => {
+  if (appState.currentDeckCards.length > 0) {
+    const confirmed = confirm(
+      "전후방을 교체하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
+    );
+    if (!confirmed) return;
+    resetCurrentDeck();
+  }
+
   const temp = appState.frontIdentityId;
   appState.frontIdentityId = appState.backIdentityId;
   appState.backIdentityId = temp;
   renderAll();
 });
 
+resetSelectBtn.addEventListener("click", () => {
+  const confirmed = confirm("현재 선택을 초기화 하겠습니까?");
+  if (!confirmed) return;
+
+  appState.selectedSinnerId = null;
+  appState.frontIdentityId = null;
+  appState.backIdentityId = null;
+  resetCurrentDeck();
+  renderAll();
+});
+
+goBuildPageBtn.addEventListener("click", () => {
+  if (!hasTwoValidIdentities()) {
+    alert("전방/후방 인격을 먼저 선택해야 합니다.");
+    return;
+  }
+  showPage("build");
+  renderAll();
+});
+
+goSavePageFromSelectBtn.addEventListener("click", () => {
+  showPage("save");
+  renderAll();
+});
+
+backToSelectBtn.addEventListener("click", () => {
+  showPage("select");
+  renderAll();
+});
+
+resetDeckBtn.addEventListener("click", () => {
+  if (appState.currentDeckCards.length === 0) return;
+  const confirmed = confirm("현재 덱을 초기화 하시겠습니까?");
+  if (!confirmed) return;
+  resetCurrentDeck();
+  renderAll();
+});
+
 saveDeckBtn.addEventListener("click", saveCurrentDeck);
 
-// ========================================
-// 초기 실행
-// ========================================
+goSavePageFromBuildBtn.addEventListener("click", () => {
+  showPage("save");
+  renderAll();
+});
+
+goSavePageFromSideBtn.addEventListener("click", () => {
+  showPage("save");
+  renderAll();
+});
+
+renameDeckBtn.addEventListener("click", renameSelectedDeck);
+generateCodeBtn.addEventListener("click", generateDeckCode);
+loadCodeBtn.addEventListener("click", loadDeckFromCode);
+deleteDeckBtn.addEventListener("click", deleteSelectedDeck);
+
+goCreateDeckBtn.addEventListener("click", () => {
+  showPage("select");
+  renderAll();
+});
+
+// =========================
+// 전체 렌더
+// =========================
+function renderAll() {
+  renderPageSelect();
+  renderPageBuild();
+  renderPageSave();
+}
+
 renderAll();

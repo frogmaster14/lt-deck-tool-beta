@@ -1,80 +1,48 @@
-/* =========================
-   기본 세팅
-========================= */
+:root {
+  --bg: #191b20;
+  --panel: #23262d;
+  --panel-2: #2a2e36;
+  --text: #ececec;
+  --muted: #b8bcc6;
+  --line: #3b4250;
+  --accent: #d6b45b;
+  --danger: #9e3e3e;
+
+  --radius: 12px;
+}
+
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: Arial, "맑은 고딕", sans-serif;
-  background: #1b1d22;
-  color: #f2f2f2;
 }
 
-.app {
-  max-width: 1400px;
+body {
+  min-width: 1280px;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+}
+
+.app-shell {
+  max-width: 1600px;
   margin: 0 auto;
   padding: 16px;
 }
 
-/* =========================
-   상단
-========================= */
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.nav-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-button {
-  background: #2c313a;
-  color: #f2f2f2;
-  border: 1px solid #4f5a6a;
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-button:hover {
-  background: #39414d;
-}
-
-.small-btn {
-  padding: 6px 10px;
-  font-size: 13px;
-}
-
-/* =========================
-   요약 바
-========================= */
-.summary-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-  align-items: center;
-  background: #232830;
-  border: 1px solid #3d4654;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 16px;
-}
-
-/* =========================
-   페이지
-========================= */
 .page {
   display: none;
 }
@@ -83,276 +51,486 @@ button:hover {
   display: block;
 }
 
+.page-header h1 {
+  margin: 0 0 12px 0;
+  font-size: 24px;
+}
+
 .panel {
-  background: #232830;
-  border: 1px solid #3d4654;
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
 }
 
-.panel h3 {
-  margin-top: 0;
-}
-
-/* =========================
-   리스트 / 카드
-========================= */
-.grid-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.item-box {
-  min-width: 140px;
-  padding: 10px;
-  background: #2d333d;
-  border: 1px solid #4b5566;
-  border-radius: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.item-box:hover {
-  background: #3a4452;
-}
-
-.item-box.selected {
-  border: 2px solid #d4b15a;
-}
-
-.item-box.disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-/* =========================
-   슬롯 버튼
-========================= */
-.position-select-row {
-  display: flex;
-  gap: 10px;
-}
-
-.slot-btn {
-  min-width: 160px;
-}
-
-.active-slot {
-  border: 2px solid #d4b15a;
-}
-
-/* =========================
-   카드팩 / 덱 목록
-========================= */
-.pack-box {
-  background: #2a3038;
-  border: 1px solid #485466;
-  border-radius: 8px;
-  padding: 12px;
+.panel-title {
+  font-size: 15px;
+  font-weight: bold;
   margin-bottom: 12px;
+  color: var(--muted);
 }
 
-.pack-box h4 {
-  margin-top: 0;
+.ui-btn {
+  border: none;
+  border-radius: 10px;
+  background: var(--panel-2);
+  color: var(--text);
+  padding: 10px 14px;
+  cursor: pointer;
 }
 
-.deck-list {
+.ui-btn:hover {
+  filter: brightness(1.08);
+}
+
+.primary-btn {
+  background: #3c4c67;
+}
+
+.danger-btn {
+  background: var(--danger);
+}
+
+.button-column {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.top-gap {
+  margin-top: 16px;
+}
+
+.save-message {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.deck-name-input,
+.code-area {
+  width: 260px;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #15171c;
+  color: var(--text);
+}
+
+.empty-preview {
+  color: var(--muted);
+  text-align: center;
+  padding: 12px;
+}
+
+/* =========================
+   PAGE 1
+========================= */
+.select-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 800px;
+  gap: 14px;
+  align-items: start;
+}
+
+.select-left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.compact-panel {
+  width: 100%;
+}
+
+.large-side-panel {
+  min-height: 100%;
+}
+
+.sinner-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 92px);
+  gap: 10px;
+  justify-content: start;
+}
+
+.sinner-item {
+  width: 90px;
+  cursor: pointer;
+}
+
+.sinner-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #14161a;
+}
+
+.sinner-item.selected .sinner-thumb {
+  outline: 3px solid var(--accent);
+}
+
+.slot-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.large-slot-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.slot-card {
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.large-slot-card {
+  padding: 12px;
+}
+
+.slot-card.active-slot-card {
+  outline: 3px solid var(--accent);
+}
+
+.slot-label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.slot-preview {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #14161a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.large-slot-preview {
+  min-height: 525px;
+}
+
+.slot-preview img,
+.large-slot-preview img {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
+}
+
+.identity-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  min-height: 230px;
+}
+
+.identity-item {
+  flex: 0 0 auto;
+  width: 150px;
+  cursor: pointer;
+}
+
+.identity-image-wrap {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #14161a;
+}
+
+.identity-image {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
+}
+
+.identity-item.selected .identity-image {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.sinner-fallback,
+.identity-fallback,
+.card-fallback,
+.slot-fallback,
+.preview-fallback {
+  display: none !important;
+}
+
+.sinner-name,
+.identity-name {
+  display: none;
+}
+
+.bottom-actions {
+  display: flex;
+  justify-content: flex-end;
   gap: 10px;
 }
 
 /* =========================
-   저장
+   PAGE 2
 ========================= */
-.save-row {
+.build-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 460px;
+  gap: 14px;
+}
+
+.build-top-combined {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.top-identity-summary-panel,
+.top-identity-pack-panel {
+  min-height: 260px;
+}
+
+.top-identity-summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.build-summary-card {
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.small-summary-card {
+  min-height: 100px;
+  overflow: hidden;
+}
+
+.build-summary-card.has-image {
+  padding: 0;
+  overflow: hidden;
+}
+
+.build-summary-card img {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
+}
+
+.card-grid-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 140px;
+}
+
+.card-tile {
+  flex: 0 0 auto;
+  width: 95px;
+  cursor: pointer;
+}
+
+.card-tile img,
+.saved-card-image,
+.preview-image {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #14161a;
+}
+
+.card-count {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.status-text {
+  margin-left: 10px;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.deck-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 6px;
+  min-height: 220px;
+  max-height: 420px;
+}
+
+.save-bar {
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-input[type="text"] {
-  width: 260px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #4f5a6a;
-  background: #171a20;
-  color: #f2f2f2;
+.sticky-panel {
+  position: sticky;
+  top: 14px;
 }
 
-.help-text {
+.preview-box {
+  margin-top: 10px;
+}
+
+.preview-title {
+  margin-bottom: 8px;
+  color: var(--muted);
   font-size: 13px;
-  color: #cfcfcf;
+}
+
+.hover-preview {
+  width: 100%;
+  min-height: 500px;
+  background: #14161a;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.hover-preview img {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
 }
 
 /* =========================
-   저장 목록
+   PAGE 3
 ========================= */
+.save-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 14px;
+}
+
+.saved-deck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 .saved-deck-card {
-  background: #2d333d;
-  border: 1px solid #4b5566;
-  border-radius: 8px;
+  background: var(--panel-2);
+  border-radius: 12px;
   padding: 12px;
-  margin-bottom: 12px;
 }
 
 .saved-deck-top {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: 14px;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
 }
 
-.saved-deck-actions {
+.saved-position-pair {
+  display: flex;
+  gap: 10px;
+}
+
+.saved-position-item {
+  width: 85px;
+}
+
+.saved-position-item img {
+  width: 100%;
+  aspect-ratio: 394 / 581;
+  object-fit: cover;
+  border-radius: 10px;
+  background: #14161a;
+}
+
+.saved-position-label {
+  margin-top: 4px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.saved-deck-name {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.saved-deck-sub {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.saved-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.saved-deck-detail {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #485466;
-}
-/* =========================
-   카드 이미지 표시
-========================= */
-.card-box {
-  width: 180px;
-}
-
-.card-image-wrap {
-  width: 100%;
-  height: 220px;
-  background: #1a1d22;
-  border: 1px solid #4b5566;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 8px;
-  position: relative;
-}
-
-.card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* 이미지가 없을 때 대신 보여줄 영역 */
-.card-image-fallback {
-  width: 100%;
-  height: 100%;
+.saved-detail {
+  margin-top: 12px;
   display: none;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 10px;
-  color: #cfcfcf;
-  font-size: 14px;
-  background: #252a31;
 }
 
-.card-meta {
-  line-height: 1.4;
-}
-.compact-meta {
-  text-align: center;
-}
-
-.compact-meta small {
-  font-size: 12px;
-  color: #d8d8d8;
-}
-/* =========================
-   저장 목록 상세 카드 이미지
-========================= */
 .saved-card-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   margin-top: 10px;
 }
 
 .saved-card-item {
-  width: 120px;
-  text-align: center;
-}
-
-.saved-card-image-wrap {
-  width: 100%;
-  height: 150px;
-  background: #1a1d22;
-  border: 1px solid #4b5566;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.saved-card-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.saved-card-fallback {
-  width: 100%;
-  height: 100%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 8px;
-  font-size: 12px;
-  color: #cfcfcf;
-  background: #252a31;
+  width: 90px;
 }
 
 .saved-card-count {
+  margin-top: 4px;
+  text-align: center;
   font-size: 12px;
-  color: #d8d8d8;
-}
-/* =========================
-   수감자 / 인격 이미지 박스
-========================= */
-.portrait-box {
-  width: 150px;
+  color: var(--muted);
 }
 
-.portrait-image-wrap {
-  width: 100%;
-  height: 170px;
-  background: #1a1d22;
-  border: 1px solid #4b5566;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 8px;
+.save-side-panel {
+  position: sticky;
+  top: 16px;
+  height: fit-content;
 }
 
-.portrait-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.save-tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
 }
 
-.portrait-fallback {
-  width: 100%;
-  height: 100%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 8px;
-  color: #cfcfcf;
-  background: #252a31;
-  font-size: 14px;
-}
-
-.portrait-name {
-  text-align: center;
+.tool-title {
+  color: var(--muted);
   font-size: 13px;
-  line-height: 1.4;
+}
+
+.code-area {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
 }
