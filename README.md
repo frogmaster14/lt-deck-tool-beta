@@ -1,5 +1,7 @@
 #Imbus Deck Builder Roadmap
 
+지금 하는건 코드 최적화(텅텅이 왤케 뭉충해)
+
 ## 현재 개발 예정
 
 ### 1. 기능 추가
