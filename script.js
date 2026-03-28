@@ -1,5 +1,23 @@
 const STORAGE_KEY = "limbusDeckBuilderSavedDecksV2";
 const DEFAULT_MAX_COPIES = 2;
+// =========================
+// ID <-> 숫자 변환 맵
+// =========================
+const identityIndexMap = {};
+const identityReverseMap = {};
+
+identities.forEach((id, i) => {
+  identityIndexMap[id.id] = i;
+  identityReverseMap[i] = id.id;
+});
+
+const cardIndexMap = {};
+const cardReverseMap = {};
+
+cards.forEach((card, i) => {
+  cardIndexMap[card.id] = i;
+  cardReverseMap[i] = card.id;
+});
 
 const appState = {
   currentPage: "select",
@@ -742,15 +760,26 @@ function generateDeckCode() {
     return;
   }
 
-  const deck = getSavedDecks().find((item) => item.id === appState.selectedSavedDeckId);
+  const deck = getSavedDecks().find(
+    (item) => item.id === appState.selectedSavedDeckId
+  );
   if (!deck) return;
 
-  const code = arrayBufferToBase64(JSON.stringify({
-    name: deck.name,
-    frontIdentityId: deck.frontIdentityId,
-    backIdentityId: deck.backIdentityId,
-    cards: deck.cards
-  }));
+  const front = identityIndexMap[deck.frontIdentityId];
+  const back = identityIndexMap[deck.backIdentityId];
+
+  const countMap = {};
+
+  deck.cards.forEach((id) => {
+    const idx = cardIndexMap[id];
+    countMap[idx] = (countMap[idx] || 0) + 1;
+  });
+
+  const cardPart = Object.entries(countMap)
+    .map(([id, count]) => `${id}:${count}`)
+    .join(";");
+
+  const code = `${front}|${back}|${cardPart}`;
 
   generatedCodeArea.value = code;
   savePageMessage.textContent = "코드가 생성되었습니다.";
@@ -758,26 +787,40 @@ function generateDeckCode() {
 
 function loadDeckFromCode() {
   const raw = loadCodeInput.value.trim();
+
   if (!raw) {
     savePageMessage.textContent = "코드를 입력해야 합니다.";
     return;
   }
 
   try {
-    const parsed = JSON.parse(base64ToUtf8(raw));
+    const [front, back, cardPart] = raw.split("|");
 
-    if (!parsed.frontIdentityId || !parsed.backIdentityId || !Array.isArray(parsed.cards)) {
-      throw new Error("bad");
+    if (!front || !back || !cardPart) {
+      throw new Error("형식 오류");
     }
 
-    appState.frontIdentityId = parsed.frontIdentityId;
-    appState.backIdentityId = parsed.backIdentityId;
-    appState.currentDeckCards = [...parsed.cards];
-    deckNameInput.value = parsed.name || "";
+    const cardsArr = [];
+
+    cardPart.split(";").forEach((part) => {
+      const [id, count] = part.split(":").map(Number);
+      const realId = cardReverseMap[id];
+
+      for (let i = 0; i < count; i++) {
+        cardsArr.push(realId);
+      }
+    });
+
+    appState.frontIdentityId = identityReverseMap[Number(front)];
+    appState.backIdentityId = identityReverseMap[Number(back)];
+    appState.currentDeckCards = cardsArr;
+
+    deckNameInput.value = "";
     savePageMessage.textContent = "코드로 덱을 불러왔습니다.";
+
     showPage("build");
     renderAll();
-  } catch {
+  } catch (e) {
     savePageMessage.textContent = "코드 형식이 잘못되었습니다.";
   }
 }
