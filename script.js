@@ -154,8 +154,8 @@ function canAddCard(card) {
   if (getDeckCount() >= 20) return false;
 
   // 카드별 최대 매수 제한
-  const currentCopies = getCurrentCardCount(card.id);
-  if (currentCopies >= card.maxCopies) return false;
+const currentCopies = getCurrentCardCount(card.id);
+if (currentCopies >= 2) return false;
 
   return true;
 }
