@@ -1,31 +1,44 @@
 const STORAGE_KEY = "limbusDeckBuilderSavedDecksV2";
 const DEFAULT_MAX_COPIES = 2;
-// =========================
-// ID <-> 숫자 변환 맵
-// =========================
-const identityIndexMap = {};
-const identityReverseMap = {};
 
-identities.forEach((id, i) => {
-  identityIndexMap[id.id] = i;
-  identityReverseMap[i] = id.id;
-});
-
-const cardIndexMap = {};
-const cardReverseMap = {};
-
-cards.forEach((card, i) => {
-  cardIndexMap[card.id] = i;
-  cardReverseMap[i] = card.id;
-});
-
+// ========================================
+// 앱 상태
+// ----------------------------------------
+// manualDeckCards:
+// - 사용자가 직접 클릭해서 넣은 카드만 저장
+// - 20장 제한은 이것만 기준으로 계산
+//
+// keywordCounts:
+// - 키워드 카드 표시 여부를 결정하는 카운터
+// - 카드 추가 시 +1
+// - 카드 제거 시 -1
+// - 값이 1 이상이면 해당 키워드 카드 표시
+//
+// 중요:
+// - 키워드 카드는 덱 20장에 포함되지 않음
+// - 저장/불러오기/공유코드에도 포함되지 않음
+// ========================================
 const appState = {
   currentPage: "select",
   selectedSinnerId: null,
   activePosition: "front",
   frontIdentityId: null,
   backIdentityId: null,
-  currentDeckCards: [],
+
+  // 사용자가 직접 넣은 카드만 저장
+  manualDeckCards: [],
+
+  // 키워드 보유 여부 카운터
+  keywordCounts: {
+    tremor: 0,   // 진동
+    bleed: 0,    // 출혈
+    sinking: 0,  // 침잠
+    poise: 0,    // 호흡
+    burn: 0,     // 화상
+    rupture: 0,  // 파열
+    charge: 0    // 충전
+  },
+
   selectedSavedDeckId: null,
   hoverCardId: null
 };
@@ -55,6 +68,8 @@ const buildBackSummary = document.getElementById("buildBackSummary");
 const identityPackRow = document.getElementById("identityPackRow");
 const basePackRow = document.getElementById("basePackRow");
 const deckRow = document.getElementById("deckRow");
+const specialCardRow = document.getElementById("specialCardRow");
+const keywordCardRow = document.getElementById("keywordCardRow");
 const deckStatusInline = document.getElementById("deckStatusInline");
 const deckNameInput = document.getElementById("deckNameInput");
 const saveDeckBtn = document.getElementById("saveDeckBtn");
@@ -75,6 +90,29 @@ const loadCodeBtn = document.getElementById("loadCodeBtn");
 const goCreateDeckBtn = document.getElementById("goCreateDeckBtn");
 const deleteDeckBtn = document.getElementById("deleteDeckBtn");
 const savePageMessage = document.getElementById("savePageMessage");
+
+// =========================
+// ID <-> 숫자 변환 맵
+// ----------------------------------------
+// 공유코드 짧게 만들기용
+// - identities.js / cards.js 순서 크게 바꾸면
+//   이전 공유코드가 깨질 수 있음
+// =========================
+const identityIndexMap = {};
+const identityReverseMap = {};
+
+identities.forEach((identity, i) => {
+  identityIndexMap[identity.id] = i;
+  identityReverseMap[i] = identity.id;
+});
+
+const cardIndexMap = {};
+const cardReverseMap = {};
+
+cards.forEach((card, i) => {
+  cardIndexMap[card.id] = i;
+  cardReverseMap[i] = card.id;
+});
 
 // =========================
 // 유틸
@@ -119,22 +157,27 @@ function getCardMaxCopies() {
   return DEFAULT_MAX_COPIES;
 }
 
+function getManualDeckCount() {
+  return appState.manualDeckCards.length;
+}
+
 function getCurrentCardCount(cardId) {
-  return appState.currentDeckCards.filter((id) => id === cardId).length;
+  return appState.manualDeckCards.filter((id) => id === cardId).length;
 }
 
 function isDeckComplete() {
-  return appState.currentDeckCards.length === 20;
+  return getManualDeckCount() === 20;
 }
 
 function resetCurrentDeck() {
-  appState.currentDeckCards = [];
+  appState.manualDeckCards = [];
+  resetKeywordCounts();
   deckNameInput.value = "";
   saveMessage.textContent = "";
 }
 
 function askResetDeckByIdentityChange(message) {
-  if (appState.currentDeckCards.length === 0) return true;
+  if (appState.manualDeckCards.length === 0) return true;
   return confirm(message);
 }
 
@@ -179,7 +222,7 @@ function getBaseCardsByPosition(position) {
 }
 
 function getDeckStatusText() {
-  return `${appState.currentDeckCards.length} / 20${isDeckComplete() ? "" : " 불충족"}`;
+  return `${getManualDeckCount()} / 20${isDeckComplete() ? "" : " 불충족"}`;
 }
 
 function arrayBufferToBase64(str) {
@@ -188,6 +231,166 @@ function arrayBufferToBase64(str) {
 
 function base64ToUtf8(str) {
   return decodeURIComponent(escape(atob(str)));
+}
+
+// =========================
+// 키워드 카운터 관련 함수
+// ----------------------------------------
+// 핵심 구조:
+//
+// keywordSourceMap = {
+//   bleed: ["card_a", "card_b"],
+//   burn: ["card_c"]
+// }
+//
+// 즉:
+// - "어떤 카드가 어떤 키워드를 부여하는지"를
+//   카드 객체에 넣지 않고,
+//   키워드 기준으로 따로 관리함
+//
+// 이 방식의 장점:
+// - 카드 데이터 본문이 가벼움
+// - 키워드 연결 수정이 쉬움
+// - 중복 카드가 있어도 카운터 방식으로 정확히 처리 가능
+// =========================
+
+/**
+ * 키워드 카운터를 0으로 초기화
+ * ----------------------------------------
+ * 덱을 통째로 비우거나
+ * 저장된 덱을 불러오기 전에 사용
+ */
+function resetKeywordCounts() {
+  appState.keywordCounts = {
+    tremor: 0,
+    bleed: 0,
+    sinking: 0,
+    poise: 0,
+    burn: 0,
+    rupture: 0,
+    charge: 0
+  };
+}
+
+/**
+ * 카드 ID 하나가 어떤 키워드들을 부여하는지 찾아서 반환
+ * ----------------------------------------
+ * keywordSourceMap을 뒤져서
+ * 이 cardId가 포함된 키워드 목록만 뽑아냄
+ *
+ * 반환 예시:
+ * ["bleed", "burn"]
+ */
+function getKeywordsForCardId(cardId) {
+  const result = [];
+
+  Object.entries(keywordSourceMap).forEach(([keywordId, sourceCardIds]) => {
+    if (sourceCardIds.includes(cardId)) {
+      result.push(keywordId);
+    }
+  });
+
+  return result;
+}
+
+/**
+ * 카드 1장을 덱에 추가할 때 키워드 카운터 반영
+ * ----------------------------------------
+ * 이 카드가 어떤 키워드 소스인지 찾아서
+ * 해당 키워드 카운트를 +1
+ */
+function applyKeywordCountsForAddedCard(cardId) {
+  const relatedKeywords = getKeywordsForCardId(cardId);
+
+  relatedKeywords.forEach((keywordId) => {
+    if (appState.keywordCounts[keywordId] == null) {
+      appState.keywordCounts[keywordId] = 0;
+    }
+
+    appState.keywordCounts[keywordId] += 1;
+  });
+}
+
+/**
+ * 카드 1장을 덱에서 제거할 때 키워드 카운터 반영
+ * ----------------------------------------
+ * 이 카드가 어떤 키워드 소스인지 찾아서
+ * 해당 키워드 카운트를 -1
+ *
+ * 최소값은 0으로 고정
+ */
+function applyKeywordCountsForRemovedCard(cardId) {
+  const relatedKeywords = getKeywordsForCardId(cardId);
+
+  relatedKeywords.forEach((keywordId) => {
+    if (appState.keywordCounts[keywordId] == null) {
+      appState.keywordCounts[keywordId] = 0;
+    }
+
+    appState.keywordCounts[keywordId] -= 1;
+
+    if (appState.keywordCounts[keywordId] < 0) {
+      appState.keywordCounts[keywordId] = 0;
+    }
+  });
+}
+
+/**
+ * 저장된 덱/공유코드 덱을 불러왔을 때
+ * manualDeckCards 전체를 기준으로 키워드 카운터 재계산
+ * ----------------------------------------
+ * 안전하게 전체를 다시 계산하는 함수
+ */
+function rebuildKeywordCountsFromManualDeck() {
+  resetKeywordCounts();
+
+  appState.manualDeckCards.forEach((cardId) => {
+    applyKeywordCountsForAddedCard(cardId);
+  });
+}
+
+/**
+ * 현재 keywordCounts를 보고
+ * 실제로 표시해야 할 키워드 카드 목록을 반환
+ * ----------------------------------------
+ * keywordCounts[keywordId] > 0 이면
+ * cards.js에 있는 해당 키워드 카드 1장을 표시
+ *
+ * cards.js 키워드 카드 예시:
+ * {
+ *   id: "card_keyword_bleed",
+ *   type: "keyword",
+ *   keywordId: "bleed",
+ *   image: "assets/cards/keyword/bleed.png"
+ * }
+ */
+function getKeywordCardsForCurrentDeck() {
+  const result = [];
+
+  Object.entries(appState.keywordCounts).forEach(([keywordId, count]) => {
+    if (count <= 0) return;
+
+    const keywordCard = cards.find(
+      (card) => card.type === "keyword" && card.keywordId === keywordId
+    );
+
+    if (keywordCard) {
+      result.push(keywordCard);
+    }
+  });
+
+  return result;
+}
+
+// =========================
+// 인격 특수 카드 (임시 비활성)
+// ----------------------------------------
+// 지금은 구현 보류
+// - 나중에 인격 선택 기준으로 따로 계산할 예정
+// - 현재는 빈 배열 반환
+// =========================
+function getSpecialCardsForSelectedIdentities() {
+  return [];
 }
 
 // =========================
@@ -316,6 +519,8 @@ function renderPageBuild() {
   renderBuildSummaries();
   renderPackRows();
   renderDeckRow();
+  renderSpecialCardRow();
+  renderKeywordCardRow();
   renderHoverPreview();
 }
 
@@ -378,6 +583,14 @@ function renderPackRows() {
   renderCardTiles(basePackRow, baseCards, "add");
 }
 
+/**
+ * 공용 카드 렌더 함수
+ *
+ * mode:
+ * - "add"    : 클릭 시 manualDeckCards에 추가
+ * - "remove" : 클릭 시 manualDeckCards에서 제거
+ * - "view"   : 보기만
+ */
 function renderCardTiles(target, cardList, mode) {
   if (cardList.length === 0) {
     target.innerHTML = `<div class="save-message">표시할 카드가 없습니다.</div>`;
@@ -388,11 +601,18 @@ function renderCardTiles(target, cardList, mode) {
     const tile = document.createElement("div");
     tile.className = "card-tile";
 
-    const currentCount = getCurrentCardCount(card.id);
-    const maxCopies = getCardMaxCopies();
-    const bottomText = mode === "add"
-      ? `${currentCount} / ${maxCopies}`
-      : `${currentCount}장`;
+    let bottomText = "";
+
+    if (mode === "add") {
+      const currentCount = getCurrentCardCount(card.id);
+      const maxCopies = getCardMaxCopies();
+      bottomText = `${currentCount} / ${maxCopies}`;
+    }
+
+    if (mode === "remove") {
+      const currentCount = getCurrentCardCount(card.id);
+      bottomText = `${currentCount}장`;
+    }
 
     tile.innerHTML = `
       <img
@@ -409,13 +629,17 @@ function renderCardTiles(target, cardList, mode) {
       renderHoverPreview();
     });
 
-    tile.addEventListener("click", () => {
-      if (mode === "add") {
+    if (mode === "add") {
+      tile.addEventListener("click", () => {
         addCardToDeck(card.id);
-      } else {
+      });
+    }
+
+    if (mode === "remove") {
+      tile.addEventListener("click", () => {
         removeCardFromDeck(card.id);
-      }
-    });
+      });
+    }
 
     target.appendChild(tile);
   });
@@ -425,14 +649,14 @@ function renderDeckRow() {
   deckRow.innerHTML = "";
   deckStatusInline.textContent = getDeckStatusText();
 
-  if (appState.currentDeckCards.length === 0) {
+  if (appState.manualDeckCards.length === 0) {
     deckRow.innerHTML = `<div class="save-message">덱이 비어 있습니다.</div>`;
     return;
   }
 
   const countedMap = {};
 
-  appState.currentDeckCards.forEach((cardId) => {
+  appState.manualDeckCards.forEach((cardId) => {
     countedMap[cardId] = (countedMap[cardId] || 0) + 1;
   });
 
@@ -449,6 +673,20 @@ function renderDeckRow() {
       if (countLabel) countLabel.textContent = `${count}장`;
     }
   });
+}
+
+function renderSpecialCardRow() {
+  if (!specialCardRow) return;
+  specialCardRow.innerHTML = "";
+  const specialCards = getSpecialCardsForSelectedIdentities();
+  renderCardTiles(specialCardRow, specialCards, "view");
+}
+
+function renderKeywordCardRow() {
+  if (!keywordCardRow) return;
+  keywordCardRow.innerHTML = "";
+  const keywordCards = getKeywordCardsForCurrentDeck();
+  renderCardTiles(keywordCardRow, keywordCards, "view");
 }
 
 function renderHoverPreview() {
@@ -631,7 +869,7 @@ function handleIdentityClick(identityId) {
     (targetSlot === "front" && appState.frontIdentityId !== identityId) ||
     (targetSlot === "back" && appState.backIdentityId !== identityId);
 
-  if (isActuallyChanging && appState.currentDeckCards.length > 0) {
+  if (isActuallyChanging && appState.manualDeckCards.length > 0) {
     const confirmed = confirm(
       "인격 구성을 변경하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
     );
@@ -651,11 +889,18 @@ function handleIdentityClick(identityId) {
 function canAddCard(cardId) {
   const card = getCardById(cardId);
   if (!card) return false;
-  if (appState.currentDeckCards.length >= 20) return false;
+  if (appState.manualDeckCards.length >= 20) return false;
   if (getCurrentCardCount(cardId) >= getCardMaxCopies()) return false;
   return true;
 }
 
+/**
+ * 카드 직접 추가
+ * ----------------------------------------
+ * 1) 20장 제한 검사
+ * 2) manualDeckCards에 넣기
+ * 3) 키워드 카운터 +1 반영
+ */
 function addCardToDeck(cardId) {
   if (!hasTwoValidIdentities()) {
     alert("전방/후방 인격을 먼저 선택해야 합니다.");
@@ -666,15 +911,23 @@ function addCardToDeck(cardId) {
     return;
   }
 
-  appState.currentDeckCards.push(cardId);
+  appState.manualDeckCards.push(cardId);
+  applyKeywordCountsForAddedCard(cardId);
   renderPageBuild();
 }
 
+/**
+ * 카드 직접 제거
+ * ----------------------------------------
+ * 1) manualDeckCards에서 제거
+ * 2) 키워드 카운터 -1 반영
+ */
 function removeCardFromDeck(cardId) {
-  const index = appState.currentDeckCards.findIndex((id) => id === cardId);
+  const index = appState.manualDeckCards.findIndex((id) => id === cardId);
   if (index === -1) return;
 
-  appState.currentDeckCards.splice(index, 1);
+  appState.manualDeckCards.splice(index, 1);
+  applyKeywordCountsForRemovedCard(cardId);
   renderPageBuild();
 }
 
@@ -697,12 +950,13 @@ function saveCurrentDeck() {
     return;
   }
 
+  // 저장 대상은 manualDeckCards만
   savedDecks.push({
     id: `deck_${Date.now()}`,
     name,
     frontIdentityId: appState.frontIdentityId,
     backIdentityId: appState.backIdentityId,
-    cards: [...appState.currentDeckCards],
+    cards: [...appState.manualDeckCards],
     createdAt: new Date().toISOString()
   });
 
@@ -719,7 +973,11 @@ function loadSavedDeck(deckId) {
 
   appState.frontIdentityId = deck.frontIdentityId;
   appState.backIdentityId = deck.backIdentityId;
-  appState.currentDeckCards = [...deck.cards];
+  appState.manualDeckCards = [...deck.cards];
+
+  // 저장된 수동 덱 기준으로 키워드 카운터 재계산
+  rebuildKeywordCountsFromManualDeck();
+
   deckNameInput.value = deck.name;
   saveMessage.textContent = "";
   showPage("build");
@@ -782,7 +1040,7 @@ function generateDeckCode() {
   const code = `${front}|${back}|${cardPart}`;
 
   generatedCodeArea.value = code;
-  savePageMessage.textContent = "코드가 생성되었습니다.";
+  savePageMessage.textContent = "짧은 코드가 생성되었습니다.";
 }
 
 function loadDeckFromCode() {
@@ -813,7 +1071,10 @@ function loadDeckFromCode() {
 
     appState.frontIdentityId = identityReverseMap[Number(front)];
     appState.backIdentityId = identityReverseMap[Number(back)];
-    appState.currentDeckCards = cardsArr;
+    appState.manualDeckCards = cardsArr;
+
+    // 공유코드로 불러온 수동 덱 기준으로 키워드 카운터 재계산
+    rebuildKeywordCountsFromManualDeck();
 
     deckNameInput.value = "";
     savePageMessage.textContent = "코드로 덱을 불러왔습니다.";
@@ -855,7 +1116,7 @@ backSlotCard.addEventListener("click", () => {
 });
 
 swapBtn.addEventListener("click", () => {
-  if (appState.currentDeckCards.length > 0) {
+  if (appState.manualDeckCards.length > 0) {
     const confirmed = confirm(
       "전후방을 교체하면 현재 덱이 초기화됩니다.\n계속하시겠습니까?"
     );
@@ -900,7 +1161,7 @@ backToSelectBtn.addEventListener("click", () => {
 });
 
 resetDeckBtn.addEventListener("click", () => {
-  if (appState.currentDeckCards.length === 0) return;
+  if (appState.manualDeckCards.length === 0) return;
   const confirmed = confirm("현재 덱을 초기화 하시겠습니까?");
   if (!confirmed) return;
   resetCurrentDeck();
