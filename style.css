@@ -1,16 +1,27 @@
+/* ========================================
+   0. 전역 변수 / 공통 색상
+   ----------------------------------------
+   자주 쓰는 색 / 반지름 / 배경색 등을
+   여기서 한 번에 관리
+======================================== */
 :root {
-  --bg: #191b20;
-  --panel: #23262d;
-  --panel-2: #2a2e36;
-  --text: #ececec;
-  --muted: #b8bcc6;
-  --line: #3b4250;
-  --accent: #d6b45b;
-  --danger: #9e3e3e;
+  --bg: #191b20;         /* 전체 배경 */
+  --panel: #23262d;      /* 기본 패널 배경 */
+  --panel-2: #2a2e36;    /* 버튼/보조 패널 배경 */
+  --text: #ececec;       /* 기본 글자색 */
+  --muted: #b8bcc6;      /* 흐린 글자색 */
+  --line: #3b4250;       /* 테두리/구분선용 */
+  --accent: #d6b45b;     /* 강조색 */
+  --danger: #9e3e3e;     /* 삭제/경고 */
 
-  --radius: 12px;
+  --radius: 12px;        /* 공통 둥근 모서리 */
 }
 
+/* ========================================
+   1. 기본 초기화
+   ----------------------------------------
+   브라우저 기본 스타일 차이를 줄이기 위한 영역
+======================================== */
 * {
   box-sizing: border-box;
 }
@@ -37,6 +48,9 @@ img {
   display: block;
 }
 
+/* ========================================
+   2. 앱 전체 공통 레이아웃
+======================================== */
 .app-shell {
   max-width: 1600px;
   margin: 0 auto;
@@ -56,6 +70,9 @@ img {
   font-size: 24px;
 }
 
+/* ========================================
+   3. 공용 패널 / 공용 UI 요소
+======================================== */
 .panel {
   background: var(--panel);
   border-radius: var(--radius);
@@ -123,9 +140,29 @@ img {
   padding: 12px;
 }
 
-/* =========================
-   PAGE 1
-========================= */
+/* ========================================
+   4. 공용 이미지/비어있는 대체요소 처리
+   ----------------------------------------
+   현재는 fallback 요소를 숨겨두는 방식
+======================================== */
+.sinner-fallback,
+.identity-fallback,
+.card-fallback,
+.slot-fallback,
+.preview-fallback {
+  display: none !important;
+}
+
+.sinner-name,
+.identity-name {
+  display: none;
+}
+
+/* ========================================
+   5. 선택 페이지 (PAGE 1)
+   ----------------------------------------
+   수감자 선택 / 인격 선택 / 전후방 지정 페이지
+======================================== */
 .select-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 800px;
@@ -148,6 +185,9 @@ img {
   min-height: 100%;
 }
 
+/* -------------------------
+   5-1. 수감자 목록
+------------------------- */
 .sinner-grid {
   display: grid;
   grid-template-columns: repeat(6, 92px);
@@ -172,12 +212,10 @@ img {
   outline: 3px solid var(--accent);
 }
 
-.slot-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
+/* -------------------------
+   5-2. 전방 / 후방 선택 슬롯
+------------------------- */
+.slot-row,
 .large-slot-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -225,6 +263,9 @@ img {
   object-fit: cover;
 }
 
+/* -------------------------
+   5-3. 인격 선택 가로 목록
+------------------------- */
 .identity-row {
   display: flex;
   gap: 10px;
@@ -257,28 +298,20 @@ img {
   outline-offset: -3px;
 }
 
-.sinner-fallback,
-.identity-fallback,
-.card-fallback,
-.slot-fallback,
-.preview-fallback {
-  display: none !important;
-}
-
-.sinner-name,
-.identity-name {
-  display: none;
-}
-
+/* -------------------------
+   5-4. 하단 버튼 묶음
+------------------------- */
 .bottom-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-/* =========================
-   PAGE 2
-========================= */
+/* ========================================
+   6. 빌드 페이지 (PAGE 2)
+   ----------------------------------------
+   카드 선택 / 덱 구성 / 확대 미리보기 페이지
+======================================== */
 .build-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 460px;
@@ -297,6 +330,9 @@ img {
   min-height: 260px;
 }
 
+/* -------------------------
+   6-1. 상단 인격 요약 카드
+------------------------- */
 .top-identity-summary-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -329,6 +365,12 @@ img {
   object-fit: cover;
 }
 
+/* -------------------------
+   6-2. 카드 공용 타일
+   ----------------------------------------
+   인격 카드 줄 / 기본 카드 줄 / 덱 카드 줄 /
+   특수 카드 줄 / 키워드 카드 줄 등에 공용 사용
+------------------------- */
 .card-grid-row {
   display: flex;
   flex-wrap: wrap;
@@ -366,6 +408,9 @@ img {
   font-size: 13px;
 }
 
+/* -------------------------
+   6-3. 실제 덱 표시 줄
+------------------------- */
 .deck-row {
   display: flex;
   flex-wrap: wrap;
@@ -377,6 +422,9 @@ img {
   max-height: 420px;
 }
 
+/* -------------------------
+   6-4. 저장 바 / 우측 고정 패널
+------------------------- */
 .save-bar {
   display: flex;
   gap: 10px;
@@ -389,6 +437,9 @@ img {
   top: 14px;
 }
 
+/* -------------------------
+   6-5. 카드 확대 미리보기
+------------------------- */
 .preview-box {
   margin-top: 10px;
 }
@@ -416,15 +467,47 @@ img {
   object-fit: cover;
 }
 
-/* =========================
-   PAGE 3
-========================= */
+/* -------------------------
+   6-6. 자동추가 카드 표시
+   ----------------------------------------
+   인격에 따라 자동으로 붙는 특수 카드 표시용
+------------------------- */
+#auto-card-section {
+  margin-top: 12px;
+}
+
+#auto-card-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.auto-card-image {
+  width: 120px;
+  height: auto;
+  border-radius: 6px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+/* ========================================
+   7. 저장 페이지 (PAGE 3)
+   ----------------------------------------
+   저장 덱 목록 / 상세 보기 / 코드 생성/불러오기
+======================================== */
 .save-layout {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 14px;
 }
 
+/* -------------------------
+   7-1. 저장 덱 목록
+------------------------- */
 .saved-deck-list {
   display: flex;
   flex-direction: column;
@@ -447,6 +530,9 @@ img {
   align-items: center;
 }
 
+/* -------------------------
+   7-2. 저장 덱의 전/후방 인격 표시
+------------------------- */
 .saved-position-pair {
   display: flex;
   gap: 10px;
@@ -471,6 +557,9 @@ img {
   color: var(--muted);
 }
 
+/* -------------------------
+   7-3. 저장 덱 정보 / 버튼
+------------------------- */
 .saved-deck-name {
   font-size: 18px;
   margin-bottom: 6px;
@@ -488,6 +577,9 @@ img {
   justify-content: flex-end;
 }
 
+/* -------------------------
+   7-4. 저장 덱 상세 카드 목록
+------------------------- */
 .saved-detail {
   margin-top: 12px;
   display: none;
@@ -511,6 +603,9 @@ img {
   color: var(--muted);
 }
 
+/* -------------------------
+   7-5. 저장 페이지 우측 도구 패널
+------------------------- */
 .save-side-panel {
   position: sticky;
   top: 16px;
