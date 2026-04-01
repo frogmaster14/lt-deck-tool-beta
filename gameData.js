@@ -85,7 +85,7 @@ const LIMBUS_DATA = {
       identities: {
         lcb: { cardCount: 3, autoCount: 1 },
         cinq_west: { cardCount: 3, autoCount: 1 },
-        thumb_east: { cardCount: 4, autoCount: 4 },
+        thumb_east: { cardCount: 3, autoCount: 4 },
         dead_rabbits: { cardCount: 3, autoCount: 0 }
       }
     },
@@ -131,7 +131,7 @@ const LIMBUS_DATA = {
       baseAutoCount: 0,
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
-        lamancha: { cardCount: 4, autoCount: 3 },
+        lamancha: { cardCount: 3, autoCount: 3 },
         lobotomy: { cardCount: 6, autoCount: 2 },
         liu: { cardCount: 3, autoCount: 0 }
       }

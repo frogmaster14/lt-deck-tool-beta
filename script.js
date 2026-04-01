@@ -321,35 +321,41 @@ function rebuildKeywordCountsFromManualDeck() {
 }
 
 function getKeywordCardsForCurrentDeck() {
-  const result = [];
+  return getKeywordCardsForCardList(appState.manualDeckCards);
+}
+function getKeywordCardsForCardList(cardIdList) {
+  const keywordCounts = createEmptyKeywordCounts();
 
-  Object.entries(appState.keywordCounts).forEach(([keywordId, count]) => {
-    if (count <= 0) return;
-
-    const keywordCard = keywordCardByKeywordId[keywordId];
-    if (keywordCard) {
-      result.push(keywordCard);
-    }
+  cardIdList.forEach((cardId) => {
+    getKeywordsForCardId(cardId).forEach((keywordId) => {
+      if (keywordCounts[keywordId] == null) {
+        keywordCounts[keywordId] = 0;
+      }
+      keywordCounts[keywordId] += 1;
+    });
   });
-  
 
-  return result;
+  return Object.entries(keywordCounts)
+    .filter(([, count]) => count > 0)
+    .map(([keywordId]) => keywordCardByKeywordId[keywordId])
+    .filter(Boolean);
 }
 
-// ========================================
-// 자동추가 카드 관련
-// ----------------------------------------
-// 1) 인격 자동추가 카드
-// 2) 수감자 고유팩 자동추가 카드
-// 둘 다 지원
-// ========================================
-function getSpecialCardsForSelectedIdentities() {
+function getKeywordIconPath(keywordId) {
+  return `assets/cards/keyword/icon/${keywordId}.png`;
+}
+
+function getSpecialCardsForIdentityIds(identityIds) {
   const result = [];
   const addedCardIds = new Set();
+  const usedSinnerIds = new Set();
 
-  // 인격 자동추가 카드
-  getFrontBackIdentityIdsFromState().forEach((identityId) => {
+  identityIds.forEach((identityId) => {
+    const identity = getIdentityById(identityId);
+    if (!identity) return;
+
     const autoCount = autoCountByIdentityId[identityId] || 0;
+    const suffix = identityId.slice(identity.sinnerId.length + 1);
 
     for (let i = 1; i <= autoCount; i++) {
       const cardId = `card_special_identity_${identityId}_${i}`;
@@ -359,36 +365,22 @@ function getSpecialCardsForSelectedIdentities() {
       if (card) {
         result.push(card);
       } else {
-  const identity = getIdentityById(identityId);
-  if (!identity) continue;
-
-  const suffix = identityId.slice(identity.sinnerId.length + 1);
-
-  result.push({
-    id: cardId,
-    image: `assets/cards/special/identity/${identity.sinnerId}/${suffix}/${i}.png`
-  });
-}
+        result.push({
+          id: cardId,
+          image: `assets/cards/special/identity/${identity.sinnerId}/${suffix}/${i}.png`
+        });
+      }
 
       addedCardIds.add(cardId);
     }
-  });
 
-  // 수감자 고유팩 자동추가 카드
-  const usedSinnerIds = new Set();
+    if (usedSinnerIds.has(identity.sinnerId)) return;
+    usedSinnerIds.add(identity.sinnerId);
 
-  getFrontBackIdentityIdsFromState().forEach((identityId) => {
-    const identity = getIdentityById(identityId);
-    if (!identity) return;
+    const baseAutoCount = baseAutoCountBySinnerId[identity.sinnerId] || 0;
 
-    const sinnerId = identity.sinnerId;
-    if (usedSinnerIds.has(sinnerId)) return;
-    usedSinnerIds.add(sinnerId);
-
-    const autoCount = baseAutoCountBySinnerId[sinnerId] || 0;
-
-    for (let i = 1; i <= autoCount; i++) {
-      const cardId = `card_special_base_${sinnerId}_${i}`;
+    for (let i = 1; i <= baseAutoCount; i++) {
+      const cardId = `card_special_base_${identity.sinnerId}_${i}`;
       if (addedCardIds.has(cardId)) continue;
 
       const card = getCardById(cardId);
@@ -397,7 +389,7 @@ function getSpecialCardsForSelectedIdentities() {
       } else {
         result.push({
           id: cardId,
-          image: `assets/cards/special/base/${sinnerId}/${i}.png`
+          image: `assets/cards/special/base/${identity.sinnerId}/${i}.png`
         });
       }
 
@@ -407,6 +399,26 @@ function getSpecialCardsForSelectedIdentities() {
 
   return result;
 }
+
+function getSpecialCardsForDeck(deck) {
+  return getSpecialCardsForIdentityIds([deck.frontIdentityId, deck.backIdentityId].filter(Boolean));
+}
+
+
+
+
+// ========================================
+// 자동추가 카드 관련
+// ----------------------------------------
+// 1) 인격 자동추가 카드
+// 2) 수감자 고유팩 자동추가 카드
+// 둘 다 지원
+// ========================================
+function getSpecialCardsForSelectedIdentities() {
+  return getSpecialCardsForIdentityIds(getFrontBackIdentityIdsFromState());
+}
+
+
 
 // ========================================
 // 공용 렌더 유틸
@@ -420,6 +432,23 @@ function createImageTileMarkup(imagePath) {
     />
     <div class="card-fallback"></div>
   `;
+}
+
+function appendViewOnlyCardTile(target, card, extraClassName = "") {
+  const tile = document.createElement("div");
+  tile.className = `card-tile ${extraClassName}`.trim();
+
+  tile.innerHTML = `
+    ${createImageTileMarkup(card.image)}
+    <div class="card-count"></div>
+  `;
+
+  tile.addEventListener("mouseenter", () => {
+    appState.hoverCardId = card.id;
+    renderHoverPreview();
+  });
+
+  target.appendChild(tile);
 }
 
 function renderCardTiles(target, cardList, mode, countOverrideMap = null) {
@@ -681,43 +710,37 @@ function renderKeywordCardRow() {
   if (!keywordCardRow) return;
 
   const keywordCards = getKeywordCardsForCurrentDeck();
-  renderCardTiles(keywordCardRow, keywordCards, "view");
-}
-
-function renderAutoCardList() {
-  if (!autoCardList) return;
-
   const specialCards = getSpecialCardsForSelectedIdentities();
-  autoCardList.innerHTML = "";
 
-  if (!specialCards.length) {
-    if (autoCardSection) {
-      autoCardSection.style.display = "none";
-    }
+  keywordCardRow.innerHTML = "";
+
+  if (keywordCards.length === 0 && specialCards.length === 0) {
+    keywordCardRow.innerHTML = `<div class="save-message">표시할 카드가 없습니다.</div>`;
     return;
   }
 
-  if (autoCardSection) {
-    autoCardSection.style.display = "block";
-  }
+  keywordCards.forEach((card) => {
+    appendViewOnlyCardTile(keywordCardRow, card);
+  });
 
   specialCards.forEach((card) => {
-    const img = document.createElement("img");
-    img.src = card.image || "";
-    img.alt = "";
-    img.className = "auto-card-image";
-    img.onerror = function () {
-      this.style.display = "none";
-    };
-
-    img.addEventListener("mouseenter", () => {
-      appState.hoverCardId = card.id;
-      renderHoverPreview();
-    });
-
-    autoCardList.appendChild(img);
+    appendViewOnlyCardTile(keywordCardRow, card, "support-special-card-tile");
   });
 }
+
+
+
+function renderAutoCardList() {
+  if (autoCardList) {
+    autoCardList.innerHTML = "";
+  }
+
+  if (autoCardSection) {
+    autoCardSection.style.display = "none";
+  }
+}
+
+
 
 function renderHoverPreview() {
   const card = getCardById(appState.hoverCardId);
@@ -839,7 +862,65 @@ function createDeckDetailHtml(deck) {
     countMap[cardId] = (countMap[cardId] || 0) + 1;
   });
 
-  let html = `<div class="saved-card-grid">`;
+  const keywordCards = getKeywordCardsForCardList(deck.cards);
+  const specialCards = getSpecialCardsForDeck(deck);
+
+  let html = `
+    <div class="saved-detail-support-strip">
+      <div class="saved-detail-support-box saved-keyword-box">
+        <div class="saved-detail-label">사용 키워드</div>
+        <div class="saved-keyword-icon-row">
+  `;
+
+  if (keywordCards.length > 0) {
+    keywordCards.forEach((card) => {
+      html += `
+        <div class="saved-keyword-icon-item">
+          <img
+            src="${getKeywordIconPath(card.keywordId)}"
+            alt=""
+            data-fallback="${card.image || ""}"
+            onerror="if (this.dataset.fallback && this.src !== this.dataset.fallback) { this.src = this.dataset.fallback; } else { this.style.display='none'; }"
+          />
+        </div>
+      `;
+    });
+  } else {
+    html += `<div class="saved-empty-support">없음</div>`;
+  }
+
+  html += `
+        </div>
+      </div>
+
+      <div class="saved-detail-support-box saved-special-box">
+        <div class="saved-detail-label">특수 카드</div>
+        <div class="saved-special-card-row">
+  `;
+
+  if (specialCards.length > 0) {
+    specialCards.forEach((card) => {
+      html += `
+        <div class="saved-special-card-item">
+          <img
+            src="${card.image || ""}"
+            alt=""
+            onerror="this.style.display='none';"
+          />
+        </div>
+      `;
+    });
+  } else {
+    html += `<div class="saved-empty-support">없음</div>`;
+  }
+
+  html += `
+        </div>
+      </div>
+    </div>
+  `;
+
+  html += `<div class="saved-card-grid">`;
 
   Object.entries(countMap).forEach(([cardId, count]) => {
     const card = getCardById(cardId);
@@ -862,6 +943,8 @@ function createDeckDetailHtml(deck) {
   html += `</div>`;
   return html;
 }
+
+
 
 // ========================================
 // 핵심 로직
