@@ -307,7 +307,9 @@ const keywordSourceMap = {
     "card_identity_meursault_thumb_east_03",
     "card_identity_yi_sang_ring_01",
     "card_identity_yi_sang_ring_02",
-    "card_identity_yi_sang_ring_03"
+    "card_identity_yi_sang_ring_03",
+    "card_identity_outis_molars_01",
+    "card_identity_outis_molars_03"
   ],
 
   // 출혈
@@ -341,13 +343,18 @@ const keywordSourceMap = {
   burn: [
     "card_identity_gregor_survivor_01",
     "card_identity_gregor_survivor_02",
-    "card_identity_gregor_survivor_03"
+    "card_identity_gregor_survivor_03",
+    "rodion_liu_01",
+    "rodion_liu_02"
   ],
 
   // 파열
   rupture: [
     "card_identity_faust_seven_south_01",
-    "card_identity_faust_seven_south_03"
+    "card_identity_faust_seven_south_03",
+    "card_identity_meursault_dead_rabbits_01",
+    "card_identity_meursault_dead_rabbits_02",
+    "card_identity_meursault_dead_rabbits_03",
   ],
 
   // 충전
