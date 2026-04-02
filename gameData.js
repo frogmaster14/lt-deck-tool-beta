@@ -344,8 +344,8 @@ const keywordSourceMap = {
     "card_identity_gregor_survivor_01",
     "card_identity_gregor_survivor_02",
     "card_identity_gregor_survivor_03",
-    "rodion_liu_01",
-    "rodion_liu_02"
+    "card_identity_rodion_liu_01",
+    "card_identity_rodion_liu_02"
   ],
 
   // 파열
