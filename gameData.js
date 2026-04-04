@@ -80,7 +80,7 @@ const LIMBUS_DATA = {
 
     // 뫼르소
     meursault: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 0,
       identities: {
         lcb: { cardCount: 3, autoCount: 1 },
@@ -127,7 +127,7 @@ const LIMBUS_DATA = {
 
     // 로쟈
     rodion: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 0,
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
@@ -151,7 +151,7 @@ const LIMBUS_DATA = {
 
     // 오티스
     outis: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 1,
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
