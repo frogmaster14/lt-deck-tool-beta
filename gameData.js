@@ -339,7 +339,10 @@ const keywordSourceMap = {
     "card_identity_don_quixote_cinq_east_01",
     "card_identity_yi_sang_ring_01",
     "card_identity_yi_sang_ring_02",
-    "card_identity_yi_sang_ring_03"
+    "card_identity_yi_sang_ring_03",
+    "card_identity_hong_lu_full_stop_office_01",
+    "card_identity_hong_lu_full_stop_office_02",
+    "card_identity_hong_lu_full_stop_office_04"
   ],
 
   // 화상
