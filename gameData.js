@@ -97,7 +97,8 @@ const LIMBUS_DATA = {
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
         kk_boss: { cardCount: 3, autoCount: 0 },
-        rcorp_reindeer: { cardCount: 3, autoCount: 1 }
+        rcorp_reindeer: { cardCount: 3, autoCount: 1 },
+        full_stop_office: { cardCount: 4, autoCount: 2 }
       }
     },
 
@@ -145,7 +146,8 @@ const LIMBUS_DATA = {
         grip: { cardCount: 3, autoCount: 1 },
         lcb: { cardCount: 3, autoCount: 0 },
         mariachi: { cardCount: 3, autoCount: 1 },
-        middle: { cardCount: 3, autoCount: 2 }
+        middle: { cardCount: 3, autoCount: 2 },
+        southern_shank: { cardCount: 3, autoCount: 1 }
       }
     },
 
@@ -168,7 +170,8 @@ const LIMBUS_DATA = {
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
         zwei_south: { cardCount: 3, autoCount: 2 },
-        survivor: { cardCount: 3, autoCount: 2 }
+        survivor: { cardCount: 3, autoCount: 2 },
+        tides: { cardCount: 3, autoCount: 2 }
       }
     }
   }
