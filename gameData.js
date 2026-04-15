@@ -342,7 +342,8 @@ const keywordSourceMap = {
     "card_identity_yi_sang_ring_03",
     "card_identity_hong_lu_full_stop_office_01",
     "card_identity_hong_lu_full_stop_office_02",
-    "card_identity_hong_lu_full_stop_office_04"
+    "card_identity_hong_lu_full_stop_office_04",
+    "card_base_hong_lu_08"
   ],
 
   // 화상
