@@ -92,7 +92,7 @@ const LIMBUS_DATA = {
 
     // 홍루
     hong_lu: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 0,
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
@@ -140,7 +140,7 @@ const LIMBUS_DATA = {
 
     // 싱클레어
     sinclair: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 0,
       identities: {
         grip: { cardCount: 3, autoCount: 1 },
@@ -165,7 +165,7 @@ const LIMBUS_DATA = {
 
     // 그레고르
     gregor: {
-      baseCount: 7,
+      baseCount: 8,
       baseAutoCount: 0,
       identities: {
         lcb: { cardCount: 3, autoCount: 0 },
