@@ -3,19 +3,335 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>?? ??</title>
-    <meta name="robots" content="noindex,nofollow" />
-    <style>
-      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #1b0d0a; color: #f8dfb5; font-family: system-ui, "Malgun Gothic", sans-serif; }
-      main { max-width: 560px; padding: 32px; text-align: center; }
-      h1 { margin: 0 0 12px; color: #f3aa16; }
-      p { margin: 0; line-height: 1.6; }
-    </style>
+    <title>림딱 빌더 2.0</title>
+    <link rel="stylesheet" href="./style.css?v=2.0.2.1" />
   </head>
   <body>
-    <main>
-      <h1>?? ??</h1>
-      <p>?.? ?? ?? ???? ?? ??? ???????.</p>
+    <main class="app-shell view is-active" id="home-view">
+      <section class="home-panel" aria-labelledby="app-title">
+        <div class="brand-block">
+          <p class="title-subline"><strong>L.T</strong> Deck TooL</p>
+          <h1 id="app-title">림.딱 빌더</h1>
+          <div class="version-row" aria-label="현재 버전">
+            <span class="version-badge" id="current-version">2.0.2.1 beta</span>
+            <span class="build-note" id="current-summary">도감 베타 배포</span>
+          </div>
+        </div>
+
+        <nav class="main-menu" aria-label="메인 메뉴">
+          <button class="menu-button" type="button" data-view="deck" data-action="open-builder">
+            <span class="menu-mark"></span>
+            <span>덱 만들기</span>
+          </button>
+          <button class="menu-button primary" type="button" data-view="codex">
+            <span class="menu-mark"></span>
+            <span>도감</span>
+          </button>
+          <button class="menu-button" type="button" data-view="saves">
+            <span class="menu-mark"></span>
+            <span>저장 목록</span>
+          </button>
+          <button class="menu-button" type="button" data-view="guide">
+            <span class="menu-mark"></span>
+            <span>이용 방법</span>
+          </button>
+          <button class="menu-button" type="button" data-view="feedback">
+            <span class="menu-mark"></span>
+            <span>피드백</span>
+          </button>
+        </nav>
+        <p class="menu-hint">도감/피드백은 더블클릭으로 들어가요. 나머지는 준비 중.</p>
+
+        <section class="archive-panel" aria-labelledby="archive-title">
+          <div class="archive-heading">
+            <p class="eyebrow">Archive</p>
+            <h2 id="archive-title">업데이트 기록</h2>
+          </div>
+          <div class="archive-list" id="archive-list" role="list"></div>
+          <p id="archive-copy" class="archive-copy"></p>
+        </section>
+      </section>
+
+      <section class="notice-panel" aria-labelledby="notice-title">
+        <div class="notice-header">
+          <div>
+            <p class="eyebrow">Developer Note</p>
+            <h2 id="notice-title">개발자 노트</h2>
+          </div>
+          <span class="notice-date" id="notice-state">대기중</span>
+        </div>
+
+        <article class="developer-note is-empty" id="developer-note" aria-live="polite">
+          큰 기능 업데이트 때만 개발자 노트 표시.
+        </article>
+
+        <div class="menu-detail" aria-live="polite">
+          <p class="detail-label">선택한 메뉴</p>
+          <h3 id="selected-title">도감</h3>
+          <p id="selected-copy">이번 베타에서 사용 가능한 핵심 기능입니다. 카드, EGO, 스택/상태, 필터를 확인합니다.</p>
+        </div>
+      </section>
     </main>
+
+    <main class="builder-shell view" id="builder-view" hidden>
+      <header class="builder-topbar">
+        <button class="topbar-button" type="button" data-action="back-home">뒤로</button>
+        <div>
+          <p class="eyebrow">Deck Builder</p>
+          <h2>전방 / 후방 인격 선택</h2>
+        </div>
+        <button class="topbar-button danger" type="button" data-action="reset-identities">초기화</button>
+      </header>
+
+      <section class="builder-layout" aria-label="인격 선택 화면">
+        <aside class="slot-panel" aria-label="전방 후방 선택">
+          <div class="slot-box">
+            <span class="slot-label">전방</span>
+            <button class="identity-slot is-active" type="button" data-slot="front">
+              <span class="slot-empty">인격 선택</span>
+            </button>
+            <div class="slot-extra" data-slot-extra="front"></div>
+          </div>
+          <div class="slot-box">
+            <span class="slot-label">후방</span>
+            <button class="identity-slot" type="button" data-slot="back">
+              <span class="slot-empty">인격 선택</span>
+            </button>
+            <div class="slot-extra" data-slot-extra="back"></div>
+          </div>
+        </aside>
+
+        <aside class="filter-panel" aria-labelledby="filter-title">
+          <div class="filter-heading">
+            <h3 id="filter-title">필터</h3>
+          </div>
+          <div class="filter-section">
+            <p class="filter-label">수감자</p>
+            <div class="filter-buttons sinner-filter-buttons" id="sinner-filter-buttons" aria-label="수감자 필터"></div>
+          </div>
+          <div class="filter-section">
+            <p class="filter-label">키워드</p>
+            <div class="filter-buttons" id="keyword-filter-buttons" aria-label="키워드 필터"></div>
+            <details class="special-keyword-panel">
+              <summary>특수 키워드</summary>
+              <div class="filter-buttons" id="keyword-special-filter-buttons" aria-label="특수 키워드 필터"></div>
+            </details>
+          </div>
+        </aside>
+
+        <section class="identity-browser" aria-label="인격 목록">
+          <div class="identity-grid" id="identity-grid" aria-label="인격 목록"></div>
+        </section>
+
+        <aside class="preview-panel" aria-label="인격 미리보기">
+          <div class="preview-frame" id="identity-preview">
+            <span>인격에 마우스를 올리면 크게 표시.</span>
+          </div>
+          <div class="preview-help">
+            <span class="preview-help-kicker">(Tip!)</span>
+            <strong>카드 위에 마우스를 올려두면 확대가 가능합니다.</strong>
+            <span>스택/상태/키워드도 확대해서 볼수 있어요!</span>
+          </div>
+          <button class="swap-slot-button" type="button" data-action="swap-slots" disabled>전방/후방 교체</button>
+          <button class="next-step-button" type="button" data-action="next-step" disabled>다음</button>
+        </aside>
+      </section>
+    </main>
+
+    <main class="deck-shell view" id="deck-view" hidden>
+      <header class="builder-topbar">
+        <button class="topbar-button" type="button" data-action="back-builder">이전</button>
+        <div>
+          <p class="eyebrow">Deck Build</p>
+          <h2>20장 덱 구성</h2>
+        </div>
+        <button class="topbar-button danger" type="button" data-action="reset-deck">덱 초기화</button>
+      </header>
+
+      <section class="deck-layout" aria-label="덱 구성 화면">
+        <aside class="deck-side-panel" aria-label="선택 인격과 필터">
+          <section class="deck-side-summary" id="deck-side-summary" aria-label="선택한 전방 후방"></section>
+
+          <section class="deck-filter-scroll" aria-label="카드 필터">
+            <div class="deck-filter-section">
+              <p class="filter-label">키워드별</p>
+              <div class="deck-filter-buttons" id="deck-keyword-filters"></div>
+              <details class="special-keyword-panel">
+                <summary>특수 키워드</summary>
+                <div class="deck-filter-buttons" id="deck-special-keyword-filters"></div>
+              </details>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">죄악속성별</p>
+              <div class="deck-filter-buttons" id="deck-sin-filters"></div>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">공격유형별</p>
+              <div class="deck-filter-buttons" id="deck-attack-type-filters"></div>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">효과별</p>
+              <div class="deck-filter-buttons" id="deck-effect-filters"></div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="deck-center-panel" aria-label="카드 선택과 덱 목록">
+          <nav class="deck-bookmarks" id="deck-card-tabs" aria-label="카드 분류"></nav>
+
+          <section class="deck-card-section" aria-label="선택 가능 카드">
+            <div class="deck-section-heading">
+              <h3>선택 가능 카드</h3>
+            </div>
+            <div class="deck-card-grid" id="deck-card-pool"></div>
+          </section>
+
+          <section class="deck-included-section" aria-label="덱에 포함된 카드">
+            <div class="deck-section-heading">
+              <h3>포함 카드</h3>
+              <span class="deck-count">0 / 20</span>
+            </div>
+            <div class="deck-included-grid" id="deck-included-grid"></div>
+            <div class="deck-extra-grid" id="deck-extra-grid" aria-label="덱 외 카드"></div>
+          </section>
+        </section>
+
+        <aside class="deck-preview-panel" aria-label="카드 미리보기">
+          <div class="preview-frame" id="deck-preview">
+            <span>카드에 마우스를 올리면 크게 표시.</span>
+          </div>
+          <div class="preview-help">
+            <span class="preview-help-kicker">(Tip!)</span>
+            <strong>위쪽 카드 풀에서 고르고, 아래쪽에서 20장을 확인합니다.</strong>
+            <span>필터는 왼쪽에서 길게 스크롤하며 조정해요.</span>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <main class="codex-shell view" id="codex-view" hidden>
+      <header class="builder-topbar">
+        <button class="topbar-button" type="button" data-action="back-home-codex">뒤로</button>
+        <div>
+          <p class="eyebrow">Codex</p>
+          <h2>도감</h2>
+        </div>
+        <button class="topbar-button danger" type="button" data-action="reset-codex">필터 초기화</button>
+      </header>
+
+      <section class="codex-layout" aria-label="도감 화면">
+        <aside class="codex-filter-panel" aria-label="도감 필터">
+          <section class="deck-filter-scroll">
+            <div class="deck-filter-section">
+              <p class="filter-label">수감자</p>
+              <div class="deck-filter-buttons" id="codex-sinner-filters"></div>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">죄악</p>
+              <div class="deck-filter-buttons" id="codex-sin-filters"></div>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">유형</p>
+              <div class="deck-filter-buttons" id="codex-attack-type-filters"></div>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">키워드</p>
+              <div class="deck-filter-buttons" id="codex-keyword-filters"></div>
+              <details class="special-keyword-panel">
+                <summary>특수 키워드</summary>
+                <div class="deck-filter-buttons" id="codex-special-keyword-filters"></div>
+              </details>
+            </div>
+            <div class="deck-filter-section">
+              <p class="filter-label">기타 필터</p>
+              <div class="deck-filter-buttons" id="codex-effect-filters"></div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="codex-center-panel" aria-label="도감 목록">
+          <nav class="deck-bookmarks" id="codex-tabs" aria-label="도감 분류"></nav>
+          <div class="deck-section-heading">
+            <h3 id="codex-heading">전체</h3>
+            <span class="deck-count" id="codex-count">0</span>
+          </div>
+          <div class="codex-grid" id="codex-grid"></div>
+        </section>
+
+        <aside class="deck-preview-panel" aria-label="도감 미리보기">
+          <div class="preview-frame" id="codex-preview">
+            <span>항목에 마우스를 올리면 크게 표시.</span>
+          </div>
+          <div class="codex-preview-filters" id="codex-preview-filters" aria-label="적용 필터"></div>
+          <div class="preview-help">
+            <span class="preview-help-kicker">(Tip!)</span>
+            <strong>도감은 전체 자료를 빠르게 훑어보는 화면입니다.</strong>
+            <span>카드와 아이콘 위에 마우스를 올리면 확대됩니다.</span>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <main class="feedback-shell view" id="feedback-view" hidden>
+      <header class="builder-topbar">
+        <button class="topbar-button" type="button" data-action="back-home-feedback">뒤로</button>
+        <div>
+          <p class="eyebrow">Beta Feedback</p>
+          <h2>피드백</h2>
+        </div>
+        <button class="topbar-button danger" type="button" data-action="reset-feedback">비우기</button>
+      </header>
+
+      <section class="feedback-layout" aria-label="피드백 작성 화면">
+        <form class="feedback-form" id="feedback-form">
+          <div class="feedback-field">
+            <label for="feedback-target">대상</label>
+            <input id="feedback-target" name="target" type="text" />
+          </div>
+
+          <div class="feedback-field">
+            <span class="feedback-label">환경</span>
+            <div class="feedback-device-options" role="radiogroup" aria-label="환경">
+              <label>
+                <input type="radio" name="device" value="PC" checked />
+                <span>PC</span>
+              </label>
+              <label>
+                <input type="radio" name="device" value="모바일" />
+                <span>모바일</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="feedback-field">
+            <label for="feedback-detail">내용</label>
+            <textarea id="feedback-detail" name="detail" rows="10"></textarea>
+          </div>
+
+          <div class="feedback-actions">
+            <button class="next-step-button" type="button" data-action="copy-feedback">피드백 복사</button>
+            <button class="swap-slot-button" type="button" data-action="save-feedback-draft">임시 저장</button>
+          </div>
+          <p class="feedback-status" id="feedback-status" aria-live="polite"></p>
+        </form>
+
+        <aside class="feedback-preview-panel" aria-label="피드백 미리보기">
+          <div class="feedback-preview-heading">
+            <p class="eyebrow">Preview</p>
+            <h3>복사될 내용</h3>
+          </div>
+          <pre class="feedback-output" id="feedback-output"></pre>
+          <div class="preview-help">
+            <span class="preview-help-kicker">(Tip!)</span>
+            <strong>복사한 내용을 베타 공지 글, 댓글, 디스코드, DM에 그대로 붙여넣으면 됩니다.</strong>
+            <span>도감에서 보고 있던 항목이 있으면 대상 칸에 자동으로 들어갑니다.</span>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./version-history.js?v=2.0.2.1"></script>
+    <script src="./data/limbus-browser-data.js?v=2.0.2.1"></script>
+    <script src="./script.js?v=2.0.2.1"></script>
   </body>
 </html>
